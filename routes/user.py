@@ -1,0 +1,80 @@
+import time
+from datetime import timedelta
+from hashlib import sha256
+
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from misc.auth import create_access_token, get_current_user, hash_passwd, verify_passwd
+from models import get_db
+from models.user import User
+
+router = APIRouter()
+
+
+class UserLogin(BaseModel):
+    uid: str
+    password: str
+
+
+class UserToken(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+class UserPasswd(BaseModel):
+    old: str
+    new: str
+
+
+@router.post("/login", response_model=UserToken, tags=["user"])
+def login(data: UserLogin, db: Session = Depends(get_db)):
+    user = db.query(User).filter_by(uid=data.uid).first()
+
+    if not user:
+        raise HTTPException(status_code=400, detail="用户未找到")
+
+    if not verify_passwd(data.password, user.passwd):
+        raise HTTPException(status_code=400, detail="密码错误")
+
+    token = create_access_token(user.uid, timedelta(hours=2), nick=user.nick)
+
+    user.last_login = int(time.time())
+
+    return UserToken(access_token=token)
+
+
+@router.post("/token", response_model=UserToken, tags=["user"])
+def token(data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = db.query(User).filter_by(uid=data.username).first()
+
+    if not user:
+        raise HTTPException(status_code=400, detail="用户未找到")
+
+    if not verify_passwd(sha256(data.password.encode()).hexdigest(), user.passwd):
+        raise HTTPException(status_code=400, detail="密码错误")
+
+    token = create_access_token(user.uid, timedelta(hours=2), nick=user.nick)
+
+    user.last_login = int(time.time())
+
+    return UserToken(access_token=token)
+
+
+@router.post("/passwd", tags=["user"])
+def passwd(
+    data: UserPasswd,
+    db: Session = Depends(get_db),
+    uid: str = Depends(get_current_user),
+):
+    user = db.query(User).filter_by(uid=uid).first()
+
+    if not verify_passwd(data.old, user.passwd):
+        raise HTTPException(status_code=400, detail="原密码错误")
+
+    user.passwd = hash_passwd(data.new)
+    db.commit()
+
+    return {"result": "success"}
