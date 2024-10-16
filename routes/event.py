@@ -12,8 +12,10 @@ router = APIRouter()
 class EventItem(BaseModel):
     eid: int
     title: str
-    start_time: str
     start_time: int
+    end_time: int
+    tag: str
+    place: str
     first_publish: int
     last_update: int
 
