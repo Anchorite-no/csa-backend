@@ -12,10 +12,12 @@ from config import get_version
 def init_app_routes(app: FastAPI):
     from routes.user import router as user_router
     from routes.news import router as news_router
+    from routes.event import router as event_router
     from routes.edit import router as edit_router
     from routes.delete import router as delete_router
 
     app.include_router(news_router, prefix="/api/news", tags=["news"])
+    app.include_router(event_router, prefix="/api/event", tags=["event"])
     app.include_router(user_router, prefix="/api/user", tags=["user"])
     app.include_router(
         edit_router,

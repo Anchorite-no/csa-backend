@@ -57,7 +57,11 @@ class EditEvent(BaseModel):
 
 
 @router.post("/event")
-def edit_event(data: EditEvent, db: Session = Depends(get_db), user: str = Depends(get_current_user)):
+def edit_event(
+    data: EditEvent,
+    db: Session = Depends(get_db),
+    user: str = Depends(get_current_user),
+):
     if data.eid:
         event = db.query(Event).filter_by(eid=data.eid).first()
         if not event:
@@ -68,8 +72,8 @@ def edit_event(data: EditEvent, db: Session = Depends(get_db), user: str = Depen
     event.title = data.title
     event.tag = data.tag
     event.description = data.description
-    event.start_time = data.start_time
-    event.end_time = data.end_time
+    event.start_time = data.start_time - data.start_time % 60
+    event.end_time = data.end_time - data.end_time % 60
     event.place = data.place
     event.last_update = int(time.time())
 
