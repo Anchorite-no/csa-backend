@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from markdown import markdown
+from html2text import HTML2Text
 
 from models import get_db
 from models.event import Event
@@ -18,6 +20,7 @@ class EventItem(BaseModel):
     place: str
     first_publish: int
     last_update: int
+    summary: str
 
 class Count(BaseModel):
     count: int
@@ -36,6 +39,13 @@ def get_events_list(page: int = 1, size: int = 8, db: Session = Depends(get_db))
     events = events.offset((page - 1) * size)
     events = events.limit(size)
     events = events.all()
+
+    for event_item in events:
+        html = markdown(event_item.description)
+        text_maker = HTML2Text()
+        text_maker.ignore_images = True
+        text = text_maker.handle(html)
+        event_item.summary = text[:100] + "..." if len(text) > 100 else text
 
     events = [EventItem(**vars(event_item)) for event_item in events]
 

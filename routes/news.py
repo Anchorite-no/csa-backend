@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from markdown import markdown
+from html2text import HTML2Text
 
 from models import get_db
 from models.news import News
@@ -15,6 +17,7 @@ class NewsItem(BaseModel):
     tag: str
     first_publish: int
     last_update: int
+    summary: str
 
 
 class Count(BaseModel):
@@ -35,6 +38,13 @@ def get_news_list(page: int, size: int, db: Session = Depends(get_db)):
     news = news.offset((page - 1) * size)
     news = news.limit(size)
     news = news.all()
+
+    for news_item in news:
+        html = markdown(news_item.content)
+        text_maker = HTML2Text()
+        text_maker.ignore_images = True
+        text = text_maker.handle(html)
+        news_item.summary = text[:100] + "..." if len(text) > 100 else text
 
     news = [NewsItem(**vars(news_item)) for news_item in news]
 
