@@ -6,7 +6,6 @@ from models import Base, get_db
 from main import app
 import requests
 
-# 定义基础 URL 前缀
 BASE_URL = "http://127.0.0.1:8000/api/user"
 VALID_UID1 = "3220100100"
 VALID_UID2 = "3220100101"
@@ -14,12 +13,11 @@ VALID_UID3 = "3220100102"
 VALID_UID4 = "3220100103"
 NONEXISTENCE_UID = "3220100109"
 
-# 配置测试数据库
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# 覆盖数据库依赖
+
 def override_get_db():
     try:
         db = TestingSessionLocal()
