@@ -77,15 +77,4 @@ def get_event_detail(eid: str, db: Session = Depends(get_db)):
     return event
 
 
-@router.get("/create", response_model=EventDetail)
-def get_event_detail(event: Event, db: Session = Depends(get_db)):
-    event = db.query(Event).filter_by(eid=eid).first()
-
-    if not event:
-        raise HTTPException(status_code=404, detail="活动未找到")
-
-    event = EventDetail(**vars(event))
-    event.publisher = db.query(User).filter_by(uid=event.publisher).first().nick
-
-    return event
 

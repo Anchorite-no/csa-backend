@@ -144,7 +144,7 @@ venv.bak/
 .mypy_cache/
 .dmypy.json
 dmypy.json
-
+.idea
 # Pyre type checker
 .pyre/
 
@@ -164,3 +164,6 @@ cython_debug/
 data.sqlite
 
 venv
+test/test.db
+test/.pytest_cache
+test/data.sqlite

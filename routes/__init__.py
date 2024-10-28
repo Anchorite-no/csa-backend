@@ -15,10 +15,12 @@ def init_app_routes(app: FastAPI):
     from routes.event import router as event_router
     from routes.edit import router as edit_router
     from routes.delete import router as delete_router
+    from routes.create import router as create_router
 
     app.include_router(news_router, prefix="/api/news", tags=["news"])
     app.include_router(event_router, prefix="/api/event", tags=["event"])
     app.include_router(user_router, prefix="/api/user", tags=["user"])
+
     app.include_router(
         edit_router,
         prefix="/api/edit",
@@ -31,7 +33,12 @@ def init_app_routes(app: FastAPI):
         tags=["delete"],
         dependencies=[Depends(login_required)],
     )
-
+    app.include_router(
+        create_router,
+        prefix="/api/create",
+        tags=["create"],
+        dependencies=[Depends(login_required)],
+    )
     @app.middleware("http")
     async def add_header(request: Request, call_next):
         start_time = time.time()

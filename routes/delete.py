@@ -18,13 +18,18 @@ def delete_news(
     data: DeleteNews,
     db: Session = Depends(get_db),
 ):
+
     news = db.query(News).filter_by(nid=data.nid).first()
 
     if not news:
         raise HTTPException(status_code=404, detail="新闻未找到")
 
-    db.delete(news)
-    db.commit()
+    try:
+        db.delete(news)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"An error occurred when deleting news: {e}")
 
     return None
 
@@ -36,7 +41,11 @@ def delete_event(data: DeleteNews, db: Session = Depends(get_db)):
     if not event:
         raise HTTPException(status_code=404, detail="活动未找到")
 
-    db.delete(event)
-    db.commit()
+    try:
+        db.delete(event)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"An error occurred when deleting event: {e}")
 
     return None
