@@ -28,6 +28,13 @@ class UserPasswd(BaseModel):
     old: str
     new: str
 
+class UserRegister(BaseModel):
+    uid: str
+    nick: str
+    passwd: str
+    email: str
+
+
 
 @router.post("/login", response_model=UserToken, tags=["user"])
 def login(data: UserLogin, db: Session = Depends(get_db)):
@@ -75,6 +82,34 @@ def passwd(
         raise HTTPException(status_code=400, detail="原密码错误")
 
     user.passwd = hash_passwd(data.new)
+
     db.commit()
 
-    return {"result": "success"}
+    return {"result": "PasswdReset Successfully"}
+
+
+@router.post("/register", response_model=UserToken, tags=["user"])
+def register(data: UserRegister, db: Session = Depends(get_db)):
+    user = db.query(User).filter_by(uid=data.uid).first()
+    if user:
+        raise HTTPException(status_code=400, detail="用户已存在")
+    new_user = User(uid=data.uid, nick=data.nick, passwd=hash_passwd(data.passwd), email=data.email, last_login=0)
+    db.add(new_user)
+
+    db.commit()
+    generated_token = create_access_token(new_user.uid, timedelta(hours=2), nick=new_user.nick)
+
+    return UserToken(access_token=generated_token)
+
+@router.post("/clear", tags=["user"])
+def clear_database_except_admin(db: Session = Depends(get_db)):
+    try:
+        db.query(User).filter(User.uid != 'admin').delete(synchronize_session=False)
+        db.commit()
+        print("Database Init Successfully")
+    except Exception as e:
+        db.rollback()
+        print(f"Unexpected failure, Rolling back {str(e)}")
+        raise HTTPException(status_code=400, detail="数据库初始化失败")
+
+    return {"result" : "Database Init Done"}

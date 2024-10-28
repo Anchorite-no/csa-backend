@@ -5,7 +5,7 @@ from models import Base, engine
 from routes import init_app_routes
 
 
-app = FastAPI(title="MyEXAM", version="0.1.0")
+app = FastAPI(title="CsaBackend", version="0.1.0")
 
 init_app_routes(app)
 

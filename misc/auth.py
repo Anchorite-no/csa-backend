@@ -12,7 +12,7 @@ SECRET_KEY = get_secret_key()
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt", "sha256_crypt", "argon2"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/user/token")
 credentials_exception = HTTPException(
     status_code=401,
