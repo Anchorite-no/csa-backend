@@ -22,3 +22,15 @@ alembic upgrade head
 - 用户管理、会员管理的接口
 
 
+
+### To Start
+
+建议使用conda+pycharm集成开发。
+
+Anaconda安装指南：[安装conda搭建python环境（保姆级教程）_conda创建python虚拟环境-CSDN博客](https://blog.csdn.net/2301_82000445/article/details/135703847?ops_request_misc=%7B%22request%5Fid%22%3A%22CCB6368E-0D6E-4F11-A337-A5DC1116A438%22%2C%22scm%22%3A%2220140713.130102334..%22%7D&request_id=CCB6368E-0D6E-4F11-A337-A5DC1116A438&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~all~sobaiduend~default-2-135703847-null-null.142^v100^pc_search_result_base7&utm_term=conda安装指南&spm=1018.2226.3001.4187)
+
+Pycharm安装指南：[PyCharm安装教程，图文教程(超详细)-CSDN博客](https://blog.csdn.net/SpringJavaMyBatis/article/details/137720715?ops_request_misc=%7B%22request%5Fid%22%3A%22194E085A-E74F-41B5-882C-DDC58E8C3048%22%2C%22scm%22%3A%2220140713.130102334..%22%7D&request_id=194E085A-E74F-41B5-882C-DDC58E8C3048&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~all~sobaiduend~default-1-137720715-null-null.142^v100^pc_search_result_base7&utm_term=pycharm安装指南&spm=1018.2226.3001.4187)
+
+Jetbrains面向在校学生提供免费软件服务，申请指南：[JetBrains 学生认证教程（Pycharm，IDEA… 等学生认证教程）_jetbrains学生认证-CSDN博客](https://blog.csdn.net/qq_36667170/article/details/79905198?ops_request_misc=%7B%22request%5Fid%22%3A%2269D20148-B7B6-43A6-A51F-9AE05993AD49%22%2C%22scm%22%3A%2220140713.130102334..%22%7D&request_id=69D20148-B7B6-43A6-A51F-9AE05993AD49&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~all~sobaiduend~default-2-79905198-null-null.142^v100^pc_search_result_base7&utm_term=jetbrains学生认证登录&spm=1018.2226.3001.4187)
+
+conda + pycharm集成开发：[pycharm 配置 conda 新环境_pycharm配置conda环境-CSDN博客](https://blog.csdn.net/qq_44886601/article/details/136006225?ops_request_misc=%7B%22request%5Fid%22%3A%2206B7B89A-ABA0-49D4-8610-C3B4FBE4B2CF%22%2C%22scm%22%3A%2220140713.130102334..%22%7D&request_id=06B7B89A-ABA0-49D4-8610-C3B4FBE4B2CF&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~all~baidu_landing_v2~default-1-136006225-null-null.142^v100^pc_search_result_base7&utm_term=conda %2B pycharm&spm=1018.2226.3001.4187)
