@@ -18,6 +18,8 @@ class EditNews(BaseModel):
     title: str
     tag: str
     content: str
+    category: int
+    image: str
 
 
 @router.post("/news")
@@ -34,6 +36,8 @@ def edit_news(
     news.title = data.title
     news.tag = data.tag
     news.content = data.content
+    news.category = data.category
+    news.image = data.image
     news.last_update = int(time.time())
 
     if not data.nid:
@@ -53,6 +57,8 @@ class EditEvent(BaseModel):
     description: str
     start_time: int
     end_time: int
+    category: int
+    image: str
     place: str
 
 
@@ -75,6 +81,8 @@ def edit_event(
     event.start_time = data.start_time - data.start_time % 60
     event.end_time = data.end_time - data.end_time % 60
     event.place = data.place
+    event.category = data.category
+    event.image = data.image
     event.last_update = int(time.time())
 
     if not data.eid:

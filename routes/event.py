@@ -21,9 +21,13 @@ class EventItem(BaseModel):
     first_publish: int
     last_update: int
     summary: str
+    category: int
+    image: str
+
 
 class Count(BaseModel):
     count: int
+
 
 @router.get("/count", response_model=Count)
 def get_events_count(db: Session = Depends(get_db)):
@@ -33,8 +37,12 @@ def get_events_count(db: Session = Depends(get_db)):
 
 
 @router.get("/list", response_model=list[EventItem])
-def get_events_list(page: int = 1, size: int = 8, db: Session = Depends(get_db)):
+def get_events_list(
+    page: int = 1, size: int = 8, category: int = None, db: Session = Depends(get_db)
+):
     events = db.query(Event)
+    if category:
+        events = events.filter_by(category=category)
     events = events.order_by(Event.first_publish.desc())
     events = events.offset((page - 1) * size)
     events = events.limit(size)
@@ -61,6 +69,8 @@ class EventDetail(BaseModel):
     last_update: int
     first_publish: int
     place: str
+    category: int
+    image: str
     publisher: str
 
 

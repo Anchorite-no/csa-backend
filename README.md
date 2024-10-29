@@ -15,6 +15,16 @@ alembic upgrade head
 
     特别的，如果增加了新的数据表，请在 `alembic/env.py` 中 import。
 
+### Catagory 定义
+
+#### event 的 category
+
+1 培训信息 2 科研信息
+
+#### news 的 category
+
+1 新闻 2 通知公告 3 网安知识 4 战队信息 5 赛事信息
+
 ### TODO
 
 - 会员的数据库设计
