@@ -27,8 +27,10 @@ class Count(BaseModel):
 
 
 @router.get("/count", response_model=Count)
-def get_news_count(db: Session = Depends(get_db)):
-    count = db.query(News).count()
+def get_news_count(category: int = None,db: Session = Depends(get_db)):
+    count = db.query(News)
+    count = count.filter_by(category=category) if category else count
+    count = count.count()
 
     return Count(count=count)
 
