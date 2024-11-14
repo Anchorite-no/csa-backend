@@ -1,18 +1,19 @@
 import time
 from datetime import timedelta
 
-from fastapi import Depends, HTTPException, Request
+from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 
 from config import get_secret_key
+
 
 SECRET_KEY = get_secret_key()
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/user/token")
 credentials_exception = HTTPException(
     status_code=401,
@@ -60,8 +61,13 @@ async def login_required(token: str = Depends(oauth2_scheme)):
 
 
 def hash_passwd(passwd: str) -> str:
-    return pwd_context.hash(passwd)
+    pwd_bytes = passwd.encode("utf-8")
+    salt = bcrypt.gensalt()
+    hashed_password = bcrypt.hashpw(password=pwd_bytes, salt=salt)
+    return hashed_password
 
 
 def verify_passwd(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    plain = plain.encode("utf-8")
+    hashed = hashed.encode("utf-8")
+    return bcrypt.checkpw(password=plain, hashed_password=hashed)
