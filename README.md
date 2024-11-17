@@ -31,4 +31,11 @@ alembic upgrade head
 
 - 会员管理的接口
 
+### 11.17 TODO
+
+- 数据库设计: 权限表，用户角色与权限表的关联
+- 管理员操作设计: 更改用户信息（不是角色）
+- 新增文件的测试，包括`route/user.py`中新增的方法，`route/admin.py`, `route/event.py`
+  - 即扩展`test/UserTest`, 设计`test/AdminTest` `test/UserEventTest`
+
 

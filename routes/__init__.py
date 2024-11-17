@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from misc.auth import login_required
+from misc.auth import login_required, login_required_admin
 from config import get_version
 
 
@@ -15,23 +15,53 @@ def init_app_routes(app: FastAPI):
     from routes.event import router as event_router
     from routes.edit import router as edit_router
     from routes.delete import router as delete_router
+    from routes.create import router as create_router
+    from routes.admin import router as admin_router
 
-    app.include_router(news_router, prefix="/api/news", tags=["news"])
-    app.include_router(event_router, prefix="/api/event", tags=["event"])
-    app.include_router(user_router, prefix="/api/user", tags=["user"])
+    app.include_router(
+        news_router,
+        prefix="/api/news",
+        tags=["news"],
+        # dependencies=[Depends(login_required)]
+    )
+    app.include_router(
+        event_router,
+        prefix="/api/event",
+        tags=["event"],
+        # dependencies=[Depends(login_required)]
+    )
+    app.include_router(
+        user_router,
+        prefix="/api/user",
+        tags=["user"],
+        # dependencies=[Depends(login_required)],
+    )
+
     app.include_router(
         edit_router,
         prefix="/api/edit",
         tags=["edit"],
-        dependencies=[Depends(login_required)],
+        dependencies=[Depends(login_required_admin)],
     )
     app.include_router(
         delete_router,
         prefix="/api/delete",
         tags=["delete"],
-        dependencies=[Depends(login_required)],
+        dependencies=[Depends(login_required_admin)],
+    )
+    app.include_router(
+        create_router,
+        prefix="/api/create",
+        tags=["create"],
+        dependencies=[Depends(login_required_admin)],
     )
 
+    app.include_router(
+        admin_router,
+        prefix="/api/admin",
+        tags=["admin"],
+        dependencies=[Depends(login_required_admin)],
+    )
     @app.middleware("http")
     async def add_header(request: Request, call_next):
         start_time = time.time()

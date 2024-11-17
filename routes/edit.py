@@ -40,14 +40,20 @@ def edit_news(
     news.image = data.image
     news.last_update = int(time.time())
 
-    if not data.nid:
-        news.first_publish = int(time.time())
-        news.publisher = user
-        db.add(news)
+    try:
+        if not data.nid:
+            news.first_publish = int(time.time())
+            news.publisher = user
+            db.add(news)
 
-    db.commit()
+        db.commit()
+        return news.nid
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"An error occurred when editing news: {e}")
 
-    return news.nid
+    return None
+
 
 
 class EditEvent(BaseModel):
@@ -85,11 +91,17 @@ def edit_event(
     event.image = data.image
     event.last_update = int(time.time())
 
-    if not data.eid:
-        event.first_publish = int(time.time())
-        event.publisher = user
-        db.add(event)
+    try:
+        if not data.eid:
+            event.first_publish = int(time.time())
+            event.publisher = user
+            db.add(event)
 
-    db.commit()
+        db.commit()
+        return event.eid
 
-    return event.eid
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"An error occurred when editing event: {e}")
+
+    return None
