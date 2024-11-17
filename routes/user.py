@@ -110,7 +110,14 @@ def register(data: UserRegister, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="邮箱已被注册")
 
     try:
-        new_user = User(uid=data.uid, nick=data.nick, passwd=hash_passwd(data.passwd), email=data.email, last_login=0)
+        new_user = User(
+            uid=data.uid,
+            nick=data.nick,
+            passwd=hash_passwd(data.passwd),
+            email=data.email,
+            last_login=0,
+            role_id=1
+        )
         db.add(new_user)
         db.commit()
         generated_token = create_access_token(new_user.uid, timedelta(hours=2), nick=new_user.nick)

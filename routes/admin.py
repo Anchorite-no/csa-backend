@@ -203,7 +203,7 @@ def show_user_list(
 def delete_user(
         data: UserDelete,
         db: Session = Depends(get_db),
-        aid: str = Depends(get_current_admin),  # 当前管理员 ID
+        aid: str = Depends(get_current_admin),
 ):
     if not is_manager(db, aid):
         raise HTTPException(
