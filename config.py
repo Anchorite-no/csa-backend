@@ -9,6 +9,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     CSA_SECRET_KEY: str = codecs.encode(os.urandom(32), "hex").decode()
+    CSA_SECRET_KEY_ADMIN: str = codecs.encode(os.urandom(32), "hex").decode()
     DB_PATH: str = "sqlite:///data.sqlite"
 
     class Config:
@@ -21,6 +22,8 @@ class Settings(BaseSettings):
 def get_secret_key() -> str:
     return get_config("CSA_SECRET_KEY")
 
+def get_secret_key_admin() -> str:
+    return get_config("CSA_SECRET_KEY_ADMIN")
 
 @lru_cache()
 def get_config(item: Optional[str] = None):

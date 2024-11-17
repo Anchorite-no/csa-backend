@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String, Integer, Text
-
+from sqlalchemy.orm import relationship
 from . import Base
 
 
@@ -16,3 +16,5 @@ class Event(Base):
     publisher = Column(String(36))
     first_publish = Column(Integer)
     last_update = Column(Integer)
+
+    users = relationship("User", secondary="user_event", back_populates="events")

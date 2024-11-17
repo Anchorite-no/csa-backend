@@ -5,6 +5,7 @@ from markdown import markdown
 from html2text import HTML2Text
 
 from models import get_db
+from models.relation.user_event import user_event
 from models.event import Event
 from models.user import User
 
@@ -24,6 +25,14 @@ class EventItem(BaseModel):
 
 class Count(BaseModel):
     count: int
+
+class ParticipationItem(BaseModel):
+    uid: int
+    username: str
+    eid: int
+    event_title: str
+    # participation_time: datetime
+    place: str
 
 @router.get("/count", response_model=Count)
 def get_events_count(db: Session = Depends(get_db)):
@@ -77,4 +86,26 @@ def get_event_detail(eid: str, db: Session = Depends(get_db)):
     return event
 
 
+@router.get("/participations", response_model=list[ParticipationItem])
+def get_participations(
+    eid: int, page: int = 1, size: int = 8, db: Session = Depends(get_db)
+):
+    participations = db.query(user_event).join(User).join(Event).filter_by(eid=eid).order_by(user_event.participation_time.desc())
+    participations = participations.offset((page - 1) * size)
+    participations = participations.limit(size)
+    participations = participations.all()
+
+    participation_items = [
+        ParticipationItem(
+            uid=participation.uid,
+            username=participation.user.nick,
+            eid=participation.eid,
+            event_title=participation.event.title,
+            participation_time=participation.event.start_time,
+            place=participation.place
+        )
+        for participation in participations
+    ]
+
+    return participation_items
 

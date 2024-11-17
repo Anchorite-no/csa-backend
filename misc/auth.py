@@ -6,9 +6,10 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-from config import get_secret_key
+from config import get_secret_key, get_secret_key_admin
 
 SECRET_KEY = get_secret_key()
+SECRET_KEY_ADMIN = get_secret_key_admin()
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -19,7 +20,11 @@ credentials_exception = HTTPException(
     detail="无法验证用户信息",
     headers={"WWW-Authenticate": "Bearer"},
 )
-
+credentials_exception_admin = HTTPException(
+    status_code=401,
+    detail="无法验证管理员信息",
+    headers={"WWW-Authenticate": "Bearer"},
+)
 
 def create_access_token(
     uid: str, expires_delta: timedelta = timedelta(hours=1), **extra_data
@@ -34,6 +39,19 @@ def create_access_token(
 
     return encoded_jwt
 
+def create_access_token_admin(
+        uid: str, aid: str, expires_delta: timedelta = timedelta(hours=1), **extra_data
+) -> str:
+    to_encode = extra_data.copy()
+    expire = int(time.time()) + expires_delta.total_seconds()
+
+    to_encode.update({"uid": uid})
+    to_encode.update({"aid": aid})
+    to_encode.update({"exp": expire})
+
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY_ADMIN, algorithm=ALGORITHM)
+
+    return encoded_jwt
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
@@ -42,6 +60,23 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 
         if not uid:
             raise credentials_exception
+
+    except JWTError:
+        raise credentials_exception
+
+    return uid
+
+async def get_current_admin(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY_ADMIN, algorithms=ALGORITHM)
+        uid = payload.get("uid")
+        aid = payload.get("aid")
+
+        if not uid:
+            raise credentials_exception
+
+        if not aid:
+            raise credentials_exception_admin
 
     except JWTError:
         raise credentials_exception
@@ -58,6 +93,14 @@ async def login_required(token: str = Depends(oauth2_scheme)):
 
     return True
 
+async def login_required_admin(token: str = Depends(oauth2_scheme)):
+    try:
+        jwt.decode(token, SECRET_KEY_ADMIN, algorithms=ALGORITHM)
+
+    except JWTError:
+        raise credentials_exception
+
+    return True
 
 def hash_passwd(passwd: str) -> str:
     return pwd_context.hash(passwd)
@@ -65,3 +108,5 @@ def hash_passwd(passwd: str) -> str:
 
 def verify_passwd(plain: str, hashed: str) -> bool:
     return pwd_context.verify(plain, hashed)
+
+
