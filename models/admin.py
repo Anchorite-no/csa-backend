@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, Boolean, String, ForeignKey
 from sqlalchemy.orm import relationship
-from . import Base  # 假设这是你的基类
+from . import Base
 
 class Admin(Base):
     __tablename__ = 'admins'

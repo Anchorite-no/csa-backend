@@ -2,7 +2,6 @@ from sqlalchemy import Column, String, Integer, Text
 
 from . import Base
 
-
 class News(Base):
     __tablename__ = "news"
 
