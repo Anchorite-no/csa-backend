@@ -29,11 +29,12 @@ class EventItem(BaseModel):
 class Count(BaseModel):
     count: int
 
+# todo: which type? signin or signup participation has been defined. refer to it.
 class ParticipationItem(BaseModel):
     uid: int
-    username: str
+    # username: str unnecessary for uid available
     eid: int
-    event_title: str
+    # event_title: str unnecessary for eid available
     # participation_time: datetime
     place: str
 

@@ -27,6 +27,12 @@ from models import Base
 from models.news import News
 from models.user import User
 from models.event import Event
+from models.admin import Admin
+from models.role import Role
+from models.participation import Participation
+from models.relation.user_event import user_event
+from models.relation.admin_roles import admin_role_association
+from models.relation.user_roles import user_role_association
 
 target_metadata = Base.metadata
 
@@ -54,6 +60,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        render_as_batch=True,
     )
 
     with context.begin_transaction():
@@ -75,7 +82,7 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection, target_metadata=target_metadata, render_as_batch=True
         )
 
         with context.begin_transaction():
