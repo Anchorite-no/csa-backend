@@ -18,6 +18,8 @@ class EditNews(BaseModel):
     title: str
     tag: str
     content: str
+    category: int
+    image: str
 
 
 @router.post("/news")
@@ -34,16 +36,24 @@ def edit_news(
     news.title = data.title
     news.tag = data.tag
     news.content = data.content
+    news.category = data.category
+    news.image = data.image
     news.last_update = int(time.time())
 
-    if not data.nid:
-        news.first_publish = int(time.time())
-        news.publisher = user
-        db.add(news)
+    try:
+        if not data.nid:
+            news.first_publish = int(time.time())
+            news.publisher = user
+            db.add(news)
 
-    db.commit()
+        db.commit()
+        return news.nid
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"An error occurred when editing news: {e}")
 
-    return news.nid
+    return None
+
 
 
 class EditEvent(BaseModel):
@@ -53,6 +63,8 @@ class EditEvent(BaseModel):
     description: str
     start_time: int
     end_time: int
+    category: int
+    image: str
     place: str
 
 
@@ -75,13 +87,21 @@ def edit_event(
     event.start_time = data.start_time - data.start_time % 60
     event.end_time = data.end_time - data.end_time % 60
     event.place = data.place
+    event.category = data.category
+    event.image = data.image
     event.last_update = int(time.time())
 
-    if not data.eid:
-        event.first_publish = int(time.time())
-        event.publisher = user
-        db.add(event)
+    try:
+        if not data.eid:
+            event.first_publish = int(time.time())
+            event.publisher = user
+            db.add(event)
 
-    db.commit()
+        db.commit()
+        return event.eid
 
-    return event.eid
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"An error occurred when editing event: {e}")
+
+    return None

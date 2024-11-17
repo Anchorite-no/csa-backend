@@ -18,6 +18,8 @@ class NewsItem(BaseModel):
     first_publish: int
     last_update: int
     summary: str
+    category: int
+    image: str
 
 
 class Count(BaseModel):
@@ -25,15 +27,21 @@ class Count(BaseModel):
 
 
 @router.get("/count", response_model=Count)
-def get_news_count(db: Session = Depends(get_db)):
-    count = db.query(News).count()
+def get_news_count(category: int = None,db: Session = Depends(get_db)):
+    count = db.query(News)
+    count = count.filter_by(category=category) if category else count
+    count = count.count()
 
     return Count(count=count)
 
 
 @router.get("/list", response_model=list[NewsItem])
-def get_news_list(page: int, size: int, db: Session = Depends(get_db)):
+def get_news_list(
+    page: int, size: int, category: int = None, db: Session = Depends(get_db)
+):
     news = db.query(News)
+    if category:
+        news = news.filter_by(category=category)
     news = news.order_by(News.first_publish.desc())
     news = news.offset((page - 1) * size)
     news = news.limit(size)
@@ -55,9 +63,12 @@ class NewsDetail(BaseModel):
     title: str
     tag: str
     content: str
+    category: int
     last_update: int
     first_publish: int
     publisher: str
+    category: int
+    image: str
 
 
 @router.get("/detail", response_model=NewsDetail)
@@ -69,5 +80,7 @@ def get_news_detail(nid: str, db: Session = Depends(get_db)):
 
     news = NewsDetail(**vars(news))
     news.publisher = db.query(User).filter_by(uid=news.publisher).first().nick
+
+
 
     return news
