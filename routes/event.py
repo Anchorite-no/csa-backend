@@ -12,7 +12,7 @@ from models.user import User
 router = APIRouter()
 
 
-class EventItem(BaseModel):
+class ConciseEvent(BaseModel):
     eid: int
     title: str
     start_time: int
@@ -22,34 +22,33 @@ class EventItem(BaseModel):
     first_publish: int
     last_update: int
     summary: str
-    category: int
+    ecid: int
+    event_category: str
     image: str
 
 
-class Count(BaseModel):
+class EventCount(BaseModel):
     count: int
 
-# todo: which type? signin or signup participation has been defined. refer to it.
-class ParticipationItem(BaseModel):
-    uid: int
-    # username: str unnecessary for uid available
-    eid: int
-    # event_title: str unnecessary for eid available
-    # participation_time: datetime
-    place: str
 
-@router.get("/count", response_model=Count)
-def get_events_count(category:int = None, db: Session = Depends(get_db)):
+@router.get("/count", response_model=EventCount)
+def get_events_count(
+    category: int = None,
+    db: Session = Depends(get_db)
+):
     count = db.query(Event)
     count = count.filter_by(category=category) if category else count
     count = count.count()
 
-    return Count(count=count)
+    return EventCount(count=count)
 
 
-@router.get("/list", response_model=list[EventItem])
+@router.get("/list", response_model=list[ConciseEvent])
 def get_events_list(
-    page: int = 1, size: int = 8, category: int = None, db: Session = Depends(get_db)
+    page: int = 1,
+    size: int = 8,
+    category: int = None,
+    db: Session = Depends(get_db)
 ):
     events = db.query(Event)
     if category:
@@ -66,7 +65,7 @@ def get_events_list(
         text = text_maker.handle(html)
         event_item.summary = text[:100] + "..." if len(text) > 100 else text
 
-    events = [EventItem(**vars(event_item)) for event_item in events]
+    events = [ConciseEvent(**vars(event_item)) for event_item in events]
 
     return events
 
@@ -86,23 +85,43 @@ class EventDetail(BaseModel):
 
 
 @router.get("/detail", response_model=EventDetail)
-def get_event_detail(eid: str, db: Session = Depends(get_db)):
+def get_event_detail(
+    eid: str,
+    db: Session = Depends(get_db)
+):
     event = db.query(Event).filter_by(eid=eid).first()
 
     if not event:
         raise HTTPException(status_code=404, detail="活动未找到")
 
     event = EventDetail(**vars(event))
-    event.publisher = db.query(User).filter_by(uid=event.publisher).first().nick
+    event.publisher = db.query(User).filter_by(
+        uid=event.publisher).first().nick
 
     return event
 
 
+# todo: which type? signin or signup participation has been defined. refer to it.
+
+
+class ParticipationItem(BaseModel):
+    uid: int
+    # username: str unnecessary for uid available
+    eid: int
+    # event_title: str unnecessary for eid available
+    # participation_time: datetime
+    place: str
+
+
 @router.get("/participations", response_model=list[ParticipationItem])
 def get_participations(
-    eid: int, page: int = 1, size: int = 8, db: Session = Depends(get_db)
+    eid: int,
+    page: int = 1,
+    size: int = 8,
+    db: Session = Depends(get_db)
 ):
-    participations = db.query(user_event).join(User).join(Event).filter_by(eid=eid).order_by(user_event.participation_time.desc())
+    participations = db.query(user_event).join(User).join(Event).filter_by(
+        eid=eid).order_by(user_event.participation_time.desc())
     participations = participations.offset((page - 1) * size)
     participations = participations.limit(size)
     participations = participations.all()
@@ -120,4 +139,3 @@ def get_participations(
     ]
 
     return participation_items
-

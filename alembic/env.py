@@ -27,6 +27,7 @@ from models import Base
 from models.news import News
 from models.user import User
 from models.event import Event
+from models.event_category import EventCategory
 from models.admin import Admin
 from models.role import Role
 from models.participation import Participation
