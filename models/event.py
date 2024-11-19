@@ -1,6 +1,9 @@
-from sqlalchemy import Column, String, Integer, Text
+from sqlalchemy import Column, String, Integer, Text, ForeignKey
 from sqlalchemy.orm import relationship
+
+from models.participation import Participation
 from . import Base
+
 
 class Event(Base):
     __tablename__ = "event"
@@ -10,7 +13,7 @@ class Event(Base):
     tag = Column(Text)
     image = Column(Text)
     description = Column(Text)
-    category = Column(Integer)
+    ecid = Column(Integer, ForeignKey('event_category.ecid'))
     start_time = Column(Integer)
     end_time = Column(Integer)
     start_signup_time = Column(Integer)
@@ -23,4 +26,8 @@ class Event(Base):
     first_publish = Column(Integer)
     last_update = Column(Integer)
 
-    users = relationship("User", secondary="user_event", back_populates="events")
+    users = relationship(
+        "User",
+        secondary=Participation.__tablename__,
+        back_populates="events"
+    )
