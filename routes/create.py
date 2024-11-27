@@ -64,7 +64,9 @@ def create_news(
     except Exception as e:
         db.rollback()
         raise HTTPException(
-            status_code=500, detail=f"An error occurred when creating news: {e}")
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred when creating news: {e}"
+        )
 
 
 @router.post("/event_category", tags=["admin"])
@@ -94,7 +96,10 @@ def create_event_category(
             return {"result": "Create EventCategory Successfully"}
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"创建活动类型时发生错误: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"创建活动类型时发生错误: {e}"
+        )
 
 
 @router.post("/event")
@@ -109,7 +114,7 @@ def create_event(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="当前用户没有权限进行此操作"
         )
-    
+
     try:
         new_event = Event(
             title=data.title,
@@ -136,4 +141,6 @@ def create_event(
     except Exception as e:
         db.rollback()
         raise HTTPException(
-            status_code=500, detail=f"An error occurred when creating event: {e}")
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred when creating event: {e}"
+        )

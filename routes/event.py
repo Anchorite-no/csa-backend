@@ -1,10 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException
+import time
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from markdown import markdown
 from html2text import HTML2Text
 
+from misc.auth import get_current_user
 from models import get_db
+from models.participation import Participation
 from models.relation.user_event import user_event
 from models.event import Event
 from models.user import User
@@ -89,23 +92,32 @@ def get_event_detail(
     eid: str,
     db: Session = Depends(get_db)
 ):
-    event = db.query(Event).filter_by(eid=eid).first()
+    event = db\
+        .query(Event)\
+        .filter_by(eid=eid)\
+        .first()
 
     if not event:
-        raise HTTPException(status_code=404, detail="活动未找到")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="活动未找到"
+        )
 
-    event = EventDetail(**vars(event))
-    event.publisher = db.query(User).filter_by(
-        uid=event.publisher).first().nick
+    event_detail = EventDetail(**vars(event))
+    event_detail.publisher = db\
+        .query(User)\
+        .filter_by(uid=event.publisher)\
+        .first()\
+        .nick
 
-    return event
+    return event_detail
 
 
 # todo: which type? signin or signup participation has been defined. refer to it.
 
 
 class ParticipationItem(BaseModel):
-    uid: int
+    uid: str
     # username: str unnecessary for uid available
     eid: int
     # event_title: str unnecessary for eid available
@@ -120,8 +132,12 @@ def get_participations(
     size: int = 8,
     db: Session = Depends(get_db)
 ):
-    participations = db.query(user_event).join(User).join(Event).filter_by(
-        eid=eid).order_by(user_event.participation_time.desc())
+    participations = db\
+        .query(Participation, User, Event)\
+        .join(User, Participation.uid == User.uid)\
+        .join(Event, Participation.eid == Event.eid)\
+        .filter_by(eid=eid)\
+        .order_by(Participation.signup_time.desc())
     participations = participations.offset((page - 1) * size)
     participations = participations.limit(size)
     participations = participations.all()
@@ -129,13 +145,143 @@ def get_participations(
     participation_items = [
         ParticipationItem(
             uid=participation.uid,
-            username=participation.user.nick,
+            username=user.nick,
             eid=participation.eid,
-            event_title=participation.event.title,
-            participation_time=participation.event.start_time,
-            place=participation.place
+            event_title=event.title,
+            participation_time=participation.signin_time,
+            place=participation.signin_location
         )
-        for participation in participations
+        for participation, user, event in participations
     ]
 
     return participation_items
+
+
+@router.post("/sign-up", response_model=list[ParticipationItem])
+def sign_up(
+    request: Request,
+    eid: int,
+    uid: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    event = db\
+        .query(Event)\
+        .filter_by(eid=eid)\
+        .first()
+
+    if not event:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="您报名的活动不存在"
+        )
+
+    try:
+        new_participation = Participation(
+            uid=uid,
+            eid=eid,
+            signup_time=int(time.time()),
+            signup_ip=request.client.host,
+            signin_time=None,
+            signin_ip=None,
+            signin_location=None,
+        )
+
+        db.add(new_participation)
+        db.commit()
+        return {"result": "sign up Successfully"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred when creating event: {e}"
+        )
+
+
+@router.post("/sign-up", response_model=list[ParticipationItem])
+def sign_up(
+    request: Request,
+    eid: int,
+    uid: str = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    event = db\
+        .query(Event)\
+        .filter_by(eid=eid)\
+        .first()
+
+    if not event:
+        raise HTTPException(
+            detail="您报名的活动不存在"
+        )
+
+    current_time = int(time.time())
+
+    if (current_time > event.end_signup_time):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="报名已截止"
+        )
+
+    try:
+        new_participation = Participation(
+            uid=uid,
+            eid=eid,
+            signup_time=current_time,
+            signup_ip=request.client.host,
+            signin_time=None,
+            signin_ip=None,
+            signin_location=None,
+        )
+
+        db.add(new_participation)
+        db.commit()
+        return {"result": "sign up Successfully"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred when creating event: {e}"
+        )
+
+
+@router.post("/sign-in", response_model=list[ParticipationItem])
+def sign_in(
+    request: Request,
+    eid: int,
+    uid: str = Depends(get_current_user),
+    location: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    participation, event = db\
+        .query(Participation, Event)\
+        .join(Event, Participation.eid == Event.eid)\
+        .filter_by(eid=eid, uid=uid)\
+        .first()
+
+    if not participation or not event:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="您签到的活动不存在，或者未成功报名"
+        )
+
+    current_time = int(time.time())
+
+    if current_time > event.end_signin_time:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="签到已截止"
+        )
+
+    participation.signin_time = current_time
+    participation.signin_ip = request.client.host
+    participation.signin_location = location
+
+    try:
+        db.commit()
+        return {"result": "sign in Successfully"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred when signing up: {e}"
+        )
