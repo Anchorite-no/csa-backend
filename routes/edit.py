@@ -31,7 +31,10 @@ def edit_news(
     if data.nid:
         news = db.query(News).filter_by(nid=data.nid).first()
         if not news:
-            raise HTTPException(status_code=404, detail="新闻未找到")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="新闻未找到"
+            )
     else:
         news = News()
 
@@ -53,7 +56,9 @@ def edit_news(
     except Exception as e:
         db.rollback()
         raise HTTPException(
-            status_code=400, detail=f"An error occurred when editing news: {e}")
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred when editing news: {e}"
+        )
 
     return None
 
@@ -79,7 +84,10 @@ def edit_event_category(
         event_category = db.query(EventCategory).filter_by(
             ecid=data.ecid).first()
         if not event_category:
-            raise HTTPException(status_code=404, detail="活动类型未找到")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="活动类型未找到"
+            )
 
         event_category.description = data.description
 
@@ -90,12 +98,12 @@ def edit_event_category(
         except Exception as e:
             db.rollback()
             raise HTTPException(
-                status_code=500,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"An error occurred when editing event: {e}"
             )
     else:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="您的输入不合法！"
         )
 
@@ -135,7 +143,7 @@ def edit_event(
         event = db.query(Event).filter_by(eid=data.eid).first()
         if not event:
             raise HTTPException(
-                status_code=404,
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail="活动未找到"
             )
 
@@ -167,11 +175,11 @@ def edit_event(
         except Exception as e:
             db.rollback()
             raise HTTPException(
-                status_code=500,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"An error occurred when editing event: {e}"
             )
     else:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="您的输入不合法！"
         )
