@@ -26,8 +26,8 @@ class Event(Base):
     first_publish = Column(Integer)
     last_update = Column(Integer)
 
-    users = relationship(
-        "User",
-        secondary=Participation.__tablename__,
-        back_populates="events"
-    )
+    # users = relationship(
+    #     "User",
+    #     secondary=Participation.__tablename__,
+    #     back_populates="events"
+    # )

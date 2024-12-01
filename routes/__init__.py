@@ -41,26 +41,26 @@ def init_app_routes(app: FastAPI):
         edit_router,
         prefix="/api/edit",
         tags=["edit"],
-        dependencies=[Depends(login_required_admin)],
+        # dependencies=[Depends(login_required_admin)],
     )
     app.include_router(
         delete_router,
         prefix="/api/delete",
         tags=["delete"],
-        dependencies=[Depends(login_required_admin)],
+        # dependencies=[Depends(login_required_admin)],
     )
     app.include_router(
         create_router,
         prefix="/api/create",
         tags=["create"],
-        dependencies=[Depends(login_required_admin)],
+        # dependencies=[Depends(login_required_admin)],
     )
 
     app.include_router(
         admin_router,
         prefix="/api/admin",
         tags=["admin"],
-        dependencies=[Depends(login_required_admin)],
+        # dependencies=[Depends(login_required_admin)],
     )
     @app.middleware("http")
     async def add_header(request: Request, call_next):

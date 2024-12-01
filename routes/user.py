@@ -19,7 +19,8 @@ router = APIRouter()
 
 class UserLogin(BaseModel):
     uid: Annotated[str, Field(pattern=r'^\d+$')]
-    passwd: Annotated[str, Field(min_length=3, max_length=30, pattern=r'^[a-zA-Z0-9_-]+$')]
+    passwd: Annotated[str, Field(
+        min_length=3, max_length=30, pattern=r'^[a-zA-Z0-9_-]+$')]
 
 
 class UserToken(BaseModel):
@@ -28,14 +29,20 @@ class UserToken(BaseModel):
 
 
 class UserPasswd(BaseModel):
-    old: Annotated[str, Field(min_length=3, max_length=30, pattern=r'^[a-zA-Z0-9_-]+$')]
-    new: Annotated[str, Field(min_length=3, max_length=30, pattern=r'^[a-zA-Z0-9_-]+$')]
+    old: Annotated[str, Field(
+        min_length=3, max_length=30, pattern=r'^[a-zA-Z0-9_-]+$')]
+    new: Annotated[str, Field(
+        min_length=3, max_length=30, pattern=r'^[a-zA-Z0-9_-]+$')]
+
 
 class UserRegister(BaseModel):
     uid: Annotated[str, Field(pattern=r'^\d+$')]
-    nick: Annotated[str, Field(min_length=3, max_length=30, pattern=r'^[a-zA-Z0-9_-]+$')]
-    passwd: Annotated[str, Field(min_length=3, max_length=30, pattern=r'^[a-zA-Z0-9_-]+$')]
+    nick: Annotated[str, Field(
+        min_length=3, max_length=30, pattern=r'^[a-zA-Z0-9_-]+$')]
+    passwd: Annotated[str, Field(
+        min_length=3, max_length=30, pattern=r'^[a-zA-Z0-9_-]+$')]
     email: EmailStr
+
 
 class ParticipationItem(BaseModel):
     uid: int

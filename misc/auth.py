@@ -106,7 +106,7 @@ def hash_passwd(passwd: str) -> str:
     pwd_bytes = passwd.encode("utf-8")
     salt = bcrypt.gensalt()
     hashed_password = bcrypt.hashpw(password=pwd_bytes, salt=salt)
-    return hashed_password
+    return hashed_password.decode('utf-8')
 
 
 def verify_passwd(plain: str, hashed: str) -> bool:
