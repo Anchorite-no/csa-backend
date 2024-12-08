@@ -17,6 +17,7 @@ def init_app_routes(app: FastAPI):
     from routes.delete import router as delete_router
     from routes.create import router as create_router
     from routes.admin import router as admin_router
+    from routes.register import router as register_router
 
     app.include_router(
         news_router,
@@ -34,6 +35,12 @@ def init_app_routes(app: FastAPI):
         user_router,
         prefix="/api/user",
         tags=["user"],
+        # dependencies=[Depends(login_required)],
+    )
+    app.include_router(
+        register_router,
+        prefix="/api/register",
+        tags=["register"],
         # dependencies=[Depends(login_required)],
     )
 

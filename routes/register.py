@@ -20,18 +20,10 @@ def generate_seid() -> str:
     return "".join(random.choices(string.ascii_letters + string.digits, k=24))
 
 
-class CreateNewSession(BaseModel):
-    code: str
-
-
 class NewSession(BaseModel):
     seid: str
     uid: str
     nick: str
-
-
-class RequestMiniappCode(BaseModel):
-    seid: str
 
 
 class ResponseMiniappCode(BaseModel):
@@ -53,9 +45,9 @@ class SubmitRegister(BaseModel):
     # and so on
 
 
-@router.post("/new_sess")
-def create_new_sess(data: CreateNewSession, db: Session = Depends(get_db)) -> NewSession:
-    if not data.code:
+@router.get("/new_sess")
+def create_new_sess(code: str, db: Session = Depends(get_db)) -> NewSession:
+    if not code:
         raise HTTPException(status_code=400, detail="Invalid code")
 
     # get userinfo from cas
@@ -64,7 +56,7 @@ def create_new_sess(data: CreateNewSession, db: Session = Depends(get_db)) -> Ne
     cas_data = {
         "client_id": get_config("CAS_APP_ID"),
         "client_secret": get_config("CAS_APP_SECRET"),
-        "code": data.code,
+        "code": code,
         "redirect_uri": get_config("CAS_REDIRECT_URI")
     }
 
@@ -105,12 +97,12 @@ def create_new_sess(data: CreateNewSession, db: Session = Depends(get_db)) -> Ne
 
 
 @router.get("/miniapp_code")
-def get_miniapp_code(data: RequestMiniappCode, db: Session = Depends(get_db())) -> ResponseMiniappCode:
-    register = db.query(Register).filter(Register.seid == data.seid).first()
+def get_miniapp_code(seid: str, db: Session = Depends(get_db())) -> ResponseMiniappCode:
+    register = db.query(Register).filter(Register.seid == seid).first()
     if not register:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    code = get_miniapp_code(data.seid)
+    code = get_miniapp_code(seid)
     code = base64.b64encode(code)
 
     return ResponseMiniappCode(code=code)
@@ -160,7 +152,7 @@ def get_miniapp_status(data: RequestMiniappStatus, db: Session = Depends(get_db(
         return {"status": True}
 
 
-@router.post("/register")
+@router.post("/submit")
 def register(data: SubmitRegister, db: Session = Depends(get_db)):
     if not data.seid:
         raise HTTPException(status_code=400, detail="Invalid seid")

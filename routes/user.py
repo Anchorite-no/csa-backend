@@ -1,18 +1,20 @@
 import time
 from datetime import timedelta
 from hashlib import sha256
+from typing import Annotated
 
+import requests
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import BaseModel, constr, EmailStr, Field
-from typing import Annotated
+from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 
+from config import get_config
 from misc.auth import create_access_token, get_current_user, hash_passwd, verify_passwd
 from models import get_db
-from models.user import User
 from models.event import Event
 from models.participation import Participation
+from models.user import User
 
 router = APIRouter()
 
@@ -50,6 +52,44 @@ class ParticipationItem(BaseModel):
     eid: int
     event_title: str
     place: str
+
+
+class WxUserLogin(BaseModel):
+    code: str
+
+
+@router.post("/wxlogin", response_model=UserToken, tags=["user"])
+def wxlogin(data: WxUserLogin, db: Session = Depends(get_db)):
+    # submit code to miniapp
+    miniapp_url = "https://api.weixin.qq.com/sns/jscode2session"
+    miniapp_params = {
+        "appid": get_config("WEIXIN_APP_ID"),
+        "secret": get_config("WEIXIN_APP_SECRET"),
+        "js_code": data.code,
+        "grant_type": "authorization_code"
+    }
+
+    miniapp_resp = requests.get(miniapp_url, params=miniapp_params)
+
+    if miniapp_resp.status_code != 200:
+        raise HTTPException(status_code=400, detail="Miniapp server error")
+
+    miniapp_resp_json = miniapp_resp.json()
+    openid = miniapp_resp_json.get("openid")
+
+    if not openid:
+        raise HTTPException(status_code=400, detail="Invalid code")
+
+    user = db.query(User).filter_by(openid=openid).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    token = create_access_token(user.uid, timedelta(hours=2), nick=user.nick)
+
+    user.last_login = int(time.time())
+
+    return UserToken(access_token=token)
 
 
 @router.post("/login", response_model=UserToken, tags=["user"])
@@ -92,9 +132,9 @@ def token(data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
 
 @router.post("/passwd", tags=["user"])
 def passwd(
-    data: UserPasswd,
-    db: Session = Depends(get_db),
-    uid: str = Depends(get_current_user),
+        data: UserPasswd,
+        db: Session = Depends(get_db),
+        uid: str = Depends(get_current_user),
 ):
     user = db.query(User).filter_by(uid=uid).first()
 
@@ -150,16 +190,16 @@ def register(data: UserRegister, db: Session = Depends(get_db)):
 
 @router.get("/participations", response_model=list[ParticipationItem])
 def get_participations(
-    uid: str = Depends(get_current_user),
-    page: int = 1,
-    size: int = 8,
-    db: Session = Depends(get_db)
+        uid: str = Depends(get_current_user),
+        page: int = 1,
+        size: int = 8,
+        db: Session = Depends(get_db)
 ):
-    participations = db\
-        .query(Participation, User, Event)\
-        .join(User, Participation.uid == User.uid)\
-        .join(Event, Participation.eid == Event.eid)\
-        .filter_by(uid=uid)\
+    participations = db \
+        .query(Participation, User, Event) \
+        .join(User, Participation.uid == User.uid) \
+        .join(Event, Participation.eid == Event.eid) \
+        .filter_by(uid=uid) \
         .order_by(Participation.signup_time.desc())
     participations = participations.offset((page - 1) * size)
     participations = participations.limit(size)
