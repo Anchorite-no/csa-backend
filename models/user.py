@@ -13,6 +13,7 @@ class User(Base):
     passwd = Column(String(64))
     email = Column(String(64), unique=True)
     last_login = Column(Integer)
+    openid = Column(String(64), unique=True)
 
     events = relationship(
         "Event",
