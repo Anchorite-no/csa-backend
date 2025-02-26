@@ -77,13 +77,13 @@ def delete_event(
 def delete_event(
         data: DeleteEvent,
         db: Session = Depends(get_db),
-        aid: str = Depends(get_current_admin)
+        # aid: str = Depends(get_current_admin)
 ):
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="当前管理员没有权限进行此操作"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN,
+    #         detail="当前管理员没有权限进行此操作"
+    #     )
 
     event = db.query(Event).filter_by(eid=data.eid).first()
 

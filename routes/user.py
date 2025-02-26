@@ -18,10 +18,9 @@ router = APIRouter()
 
 
 class UserLogin(BaseModel):
-    uid: Annotated[str, Field(pattern=r'^\d+$')]
+    uid: Annotated[str, Field(pattern=r'^(\d+|admin)$')]
     passwd: Annotated[str, Field(
-        min_length=3, max_length=30, pattern=r'^[a-zA-Z0-9_-]+$')]
-
+        min_length=3, max_length=120, pattern=r'^[a-zA-Z0-9_-]+$')]
 
 class UserToken(BaseModel):
     access_token: str

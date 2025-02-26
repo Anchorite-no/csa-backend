@@ -20,11 +20,11 @@ class ConciseEvent(BaseModel):
     title: str
     start_time: int
     end_time: int
-    start_signup_time: int
-    end_signup_time: int
-    start_signin_time: int
-    end_signin_time: int
-    signin_location: str
+    # start_signup_time: int
+    # end_signup_time: int
+    # start_signin_time: int
+    # end_signin_time: int
+    # signin_location: str
     place: str
     publisher: str
     first_publish: int
@@ -32,8 +32,8 @@ class ConciseEvent(BaseModel):
     tag: str
     image: str
     summary: str
-    ecid: int
-    event_category: str
+    category: int
+    # event_category: str
 
     class Config:
         orm_mode = True
@@ -61,7 +61,7 @@ def get_events_list(
         category: int = None,
         db: Session = Depends(get_db)
 ):
-    events = db.query(Event).join(EventCategory, ecid=EventCategory.ecid)
+    events = db.query(Event)
 
     if category:
         events = events.filter(ecid=category)
@@ -82,11 +82,11 @@ def get_events_list(
             title=event_item.title,
             start_time=event_item.start_time,
             end_time=event_item.end_time,
-            start_signup_time=event_item.start_signup_time,
-            end_signup_time=event_item.end_signup_time,
-            start_signin_time=event_item.start_signin_time,
-            end_signin_time=event_item.end_signin_time,
-            signin_location=event_item.signin_location,
+            # start_signup_time=event_item.start_signup_time,
+            # end_signup_time=event_item.end_signup_time,
+            # start_signin_time=event_item.start_signin_time,
+            # end_signin_time=event_item.end_signin_time,
+            # signin_location=event_item.signin_location,
             place=event_item.place,
             publisher=event_item.publisher,
             first_publish=event_item.first_publish,
@@ -94,8 +94,8 @@ def get_events_list(
             tag=event_item.tag,
             image=event_item.image,
             summary=summary,
-            ecid=event_item.ecid,
-            event_category=event_item.event_category.name
+            category=event_item.ecid,
+            # event_category=event_item.event_category.name
         )
         concise_events.append(concise_event)
 
@@ -133,7 +133,20 @@ def get_event_detail(
     else:
         event.publisher = "未知"
 
-    event_detail = EventDetail(**vars(event))
+    event_detail = EventDetail(
+        title=event.title,
+        tag=event.tag,
+        description=event.description,
+        start_time=event.start_time,
+        end_time=event.end_time,
+        last_update=event.last_update,
+        first_publish=event.first_publish,
+        place=event.place,
+        category=event.ecid,
+        image=event.image,
+        publisher=event.publisher
+    )
+    # event_detail = EventDetail(**vars(event))
     return event_detail
 
 
@@ -168,46 +181,6 @@ def get_participations(
     ]
 
     return participation_items
-
-@router.post("/sign-up", response_model=list[ParticipationItem])
-def sign_up(
-    request: Request,
-    eid: int,
-    uid: str = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    event = db\
-        .query(Event)\
-        .filter_by(eid=eid)\
-        .first()
-
-    if not event:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="您报名的活动不存在"
-        )
-
-    try:
-        new_participation = Participation(
-            uid=uid,
-            eid=eid,
-            signup_time=int(time.time()),
-            signup_ip=request.client.host,
-            signin_time=None,
-            signin_ip=None,
-            signin_location=None,
-        )
-
-        db.add(new_participation)
-        db.commit()
-        return {"result": "sign up Successfully"}
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred when creating event: {e}"
-        )
-
 
 @router.post("/sign-up", response_model=list[ParticipationItem])
 def sign_up(

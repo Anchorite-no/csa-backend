@@ -33,11 +33,11 @@ class CreateEvent(BaseModel):
     ecid: int
     start_time: int
     end_time: int
-    start_signup_time: int
-    end_signup_time: int
-    start_signin_time: int
-    end_signin_time: int
-    signin_location: str
+    # start_signup_time: int
+    # end_signup_time: int
+    # start_signin_time: int
+    # end_signin_time: int
+    # signin_location: str
     place: str
 
 
@@ -119,11 +119,11 @@ def create_event(
             ecid=data.ecid,
             start_time=data.start_time,
             end_time=data.end_time,
-            start_signup_time=data.start_signup_time,
-            end_signup_time=data.end_signup_time,
-            start_signin_time=data.start_signin_time,
-            end_signin_time=data.end_signin_time,
-            sign_in_location=data.signin_location,
+            # start_signup_time=data.start_signup_time,
+            # end_signup_time=data.end_signup_time,
+            # start_signin_time=data.start_signin_time,
+            # end_signin_time=data.end_signin_time,
+            # sign_in_location=data.signin_location,
             place=data.place,
             publisher=publisher,
             first_publish=int(time.time()),
