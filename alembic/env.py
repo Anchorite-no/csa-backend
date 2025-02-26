@@ -31,6 +31,7 @@ from models.event_category import EventCategory
 from models.admin import Admin
 from models.role import Role
 from models.participation import Participation
+from models.register import Register
 from models.relation.user_event import user_event
 from models.relation.admin_roles import admin_role_association
 from models.relation.user_roles import user_role_association

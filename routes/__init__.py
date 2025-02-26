@@ -15,8 +15,8 @@ def init_app_routes(app: FastAPI):
     from routes.event import router as event_router
     from routes.edit import router as edit_router
     from routes.delete import router as delete_router
-    from routes.create import router as create_router
     from routes.admin import router as admin_router
+    from routes.register import router as register_router
 
     app.include_router(
         news_router,
@@ -36,6 +36,14 @@ def init_app_routes(app: FastAPI):
         tags=["user"],
         # dependencies=[Depends(login_required)],
     )
+    
+    app.include_router(
+        register_router,
+        prefix="/api/register",
+        tags=["register"],
+        # dependencies=[Depends(login_required)],
+    )
+    
 
     app.include_router(
         edit_router,
@@ -50,18 +58,12 @@ def init_app_routes(app: FastAPI):
         # dependencies=[Depends(login_required_admin)],
     )
     app.include_router(
-        create_router,
-        prefix="/api/create",
-        tags=["create"],
-        # dependencies=[Depends(login_required_admin)],
-    )
-
-    app.include_router(
         admin_router,
         prefix="/api/admin",
         tags=["admin"],
         # dependencies=[Depends(login_required_admin)],
     )
+
     @app.middleware("http")
     async def add_header(request: Request, call_next):
         start_time = time.time()

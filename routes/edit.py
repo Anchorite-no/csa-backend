@@ -26,12 +26,21 @@ class EditNews(BaseModel):
 
 @router.post("/news")
 def edit_news(
-    data: EditNews, db: Session = Depends(get_db), user: str = Depends(get_current_user)
+    data: EditNews, db: Session = Depends(get_db), aid: str = Depends(get_current_admin)
 ):
+    if not is_manager(db, aid):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="当前用户没有权限进行此操作"
+        )
+
     if data.nid:
         news = db.query(News).filter_by(nid=data.nid).first()
         if not news:
-            raise HTTPException(status_code=404, detail="新闻未找到")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="新闻未找到"
+            )
     else:
         news = News()
 
@@ -45,17 +54,19 @@ def edit_news(
     try:
         if not data.nid:
             news.first_publish = int(time.time())
-            news.publisher = user
+            news.publisher = aid
             db.add(news)
 
         db.commit()
-        return news.nid
+    
     except Exception as e:
         db.rollback()
         raise HTTPException(
-            status_code=400, detail=f"An error occurred when editing news: {e}")
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred when editing news: {e}"
+        )
 
-    return None
+    return news.nid
 
 
 class EditEventCategory(BaseModel):
@@ -79,25 +90,29 @@ def edit_event_category(
         event_category = db.query(EventCategory).filter_by(
             ecid=data.ecid).first()
         if not event_category:
-            raise HTTPException(status_code=404, detail="活动类型未找到")
-
-        event_category.description = data.description
-
-        try:
-            db.commit()
-            db.refresh(event_category)
-            return data.eid
-        except Exception as e:
-            db.rollback()
             raise HTTPException(
-                status_code=500,
-                detail=f"An error occurred when editing event: {e}"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="活动类型未找到"
             )
     else:
+        event_category = EventCategory()
+
+    event_category.description = data.description
+
+    try:
+        if not data.ecid:
+            db.add(event_category)
+
+        db.commit()
+    
+    except Exception as e:
+        db.rollback()
         raise HTTPException(
-            status_code=400,
-            detail="您的输入不合法！"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred when editing event: {e}"
         )
+    
+    return data.eid
 
 
 class EditEvent(BaseModel):
@@ -109,21 +124,17 @@ class EditEvent(BaseModel):
     category: int
     start_time: int
     end_time: int
-    # start_signup_time: int
-    # end_signup_time: int
-    # start_signin_time: int
-    # end_signin_time: int
-    # signin_location: str
+    start_signup_time: Optional[int] = None
+    end_signup_time: Optional[int] = None
+    start_signin_time: Optional[int] = None
+    end_signin_time: Optional[int] = None
     place: str
-    # publisher: str
-
 
 @router.post("/event")
 def edit_event(
     data: EditEvent,
     db: Session = Depends(get_db),
-    user: str = Depends(get_current_user),
-    # aid: str = Depends(get_current_admin),
+    aid: str = Depends(get_current_admin),
 ):
     # if not is_manager(db, aid):
     #     raise HTTPException(
@@ -136,13 +147,11 @@ def edit_event(
         event = db.query(Event).filter_by(eid=data.eid).first()
         if not event:
             raise HTTPException(
-                status_code=404,
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail="活动未找到"
             )
     else:
         event = Event()
-        first_publish = 1
-        
 
     event.title = data.title
     event.tag = data.tag
@@ -151,34 +160,26 @@ def edit_event(
     event.ecid = data.category
     event.start_time = data.start_time - data.start_time % 60
     event.end_time = data.end_time - data.end_time % 60
-    # event.start_signup_time = data.start_signup_time
-    # event.end_signup_time = data.end_signup_time
-    # event.start_signin_time = data.start_signin_time
-    # event.end_signin_time = data.end_signin_time
-    if not data.eid:
-        event.first_publish = int(time.time())
+    event.start_signup_time = data.start_signup_time
+    event.end_signup_time = data.end_signup_time
+    event.start_signin_time = data.start_signin_time
+    event.end_signin_time = data.end_signin_time
     event.place = data.place
-    event.publisher = user
     event.last_update = int(time.time())
 
     try:
-        # if not data.eid:
-        #     event.first_publish = int(time.time())
-        #     event.publisher = user
-        #     db.add(event)
-        db.add(event)
+        if not data.eid:
+            event.first_publish = int(time.time())
+            event.publisher = aid
+            db.add(event)
+
         db.commit()
-        db.refresh(event)
-        return data.eid
 
     except Exception as e:
         db.rollback()
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred when editing event: {e}"
         )
-    else:
-        raise HTTPException(
-            status_code=400,
-            detail="您的输入不合法！"
-        )
+    
+    return data.eid

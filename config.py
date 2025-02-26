@@ -9,8 +9,13 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     CSA_SECRET_KEY: str = codecs.encode(os.urandom(32), "hex").decode()
-    CSA_SECRET_KEY_ADMIN: str = codecs.encode(os.urandom(32), "hex").decode()
+    CSA_SECRET_KEY_ADMIN: str = codecs.encode(os.urandom(64), "hex").decode()
     DB_PATH: str = "sqlite:///data.sqlite"
+    WEIXIN_APP_ID: str = ""
+    WEIXIN_APP_SECRET: str = ""
+    CAS_APP_ID: str = ""
+    CAS_APP_SECRET: str = ""
+    CAS_REDIRECT_URI: str = ""
 
     class Config:
         env_file = ".env"

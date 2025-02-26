@@ -15,7 +15,7 @@ alembic upgrade head
 
     特别的，如果增加了新的数据表，请在 `alembic/env.py` 中 import。
 
-### Catagory 定义
+### Category 定义
 
 #### event 的 category
 

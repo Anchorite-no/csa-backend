@@ -33,7 +33,10 @@ def delete_news(
     news = db.query(News).filter_by(nid=data.nid).first()
 
     if not news:
-        raise HTTPException(status_code=404, detail="新闻未找到")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="新闻未找到"
+        )
 
     try:
         db.delete(news)
@@ -41,7 +44,9 @@ def delete_news(
     except Exception as e:
         db.rollback()
         raise HTTPException(
-            status_code=500, detail=f"An error occurred when deleting news: {e}")
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred when deleting news: {e}"
+        )
 
     return None
 
@@ -60,7 +65,10 @@ def delete_event(
 
     event_category = db.query(EventCategory).filter_by(ecid=data.ecid).first()
     if not event_category:
-        raise HTTPException(status_code=404, detail="活动类型未找到")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="活动类型未找到"
+        )
 
     try:
         db.delete(event_category)
@@ -68,7 +76,9 @@ def delete_event(
     except Exception as e:
         db.rollback()
         raise HTTPException(
-            status_code=500, detail=f"删除活动类型时发生错误: {e}")
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"删除活动类型时发生错误: {e}"
+        )
 
     return None
 
@@ -88,7 +98,10 @@ def delete_event(
     event = db.query(Event).filter_by(eid=data.eid).first()
 
     if not event:
-        raise HTTPException(status_code=404, detail="活动未找到")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="活动未找到"
+        )
 
     try:
         db.delete(event)
@@ -96,6 +109,8 @@ def delete_event(
     except Exception as e:
         db.rollback()
         raise HTTPException(
-            status_code=500, detail=f"删除活动时发生错误: {e}")
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"删除活动时发生错误: {e}"
+        )
 
     return None
