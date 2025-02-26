@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from markdown import markdown
 from html2text import HTML2Text
 
+from misc.model import aid_to_nick
 from misc.auth import get_current_user
 from models import get_db
 from models.participation import Participation
@@ -25,8 +26,7 @@ class ConciseEvent(BaseModel):
     first_publish: int
     last_update: int
     summary: str
-    ecid: int
-    event_category: str
+    category: int
     image: str
 
 
@@ -35,12 +35,9 @@ class EventCount(BaseModel):
 
 
 @router.get("/count", response_model=EventCount)
-def get_events_count(
-    category: int = None,
-    db: Session = Depends(get_db)
-):
+def get_events_count(category: int = None, db: Session = Depends(get_db)):
     count = db.query(Event)
-    count = count.filter_by(category=category) if category else count
+    count = count.filter_by(ecid=category) if category else count
     count = count.count()
 
     return EventCount(count=count)
@@ -48,14 +45,12 @@ def get_events_count(
 
 @router.get("/list", response_model=list[ConciseEvent])
 def get_events_list(
-    page: int = 1,
-    size: int = 8,
-    category: int = None,
-    db: Session = Depends(get_db)
+    page: int = 1, size: int = 8, category: int = None, db: Session = Depends(get_db)
 ):
     events = db.query(Event)
     if category:
-        events = events.filter_by(category=category)
+        events = events.filter_by(ecid=category)
+
     events = events.order_by(Event.first_publish.desc())
     events = events.offset((page - 1) * size)
     events = events.limit(size)
@@ -67,6 +62,7 @@ def get_events_list(
         text_maker.ignore_images = True
         text = text_maker.handle(html)
         event_item.summary = text[:100] + "..." if len(text) > 100 else text
+        event_item.category = event_item.ecid
 
     events = [ConciseEvent(**vars(event_item)) for event_item in events]
 
@@ -88,27 +84,18 @@ class EventDetail(BaseModel):
 
 
 @router.get("/detail", response_model=EventDetail)
-def get_event_detail(
-    eid: str,
-    db: Session = Depends(get_db)
-):
-    event = db\
-        .query(Event)\
-        .filter_by(eid=eid)\
-        .first()
+def get_event_detail(eid: str, db: Session = Depends(get_db)):
+    event = db.query(Event).filter_by(eid=eid).first()
 
     if not event:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="活动未找到"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="活动未找到")
+    
+    event = vars(event)
 
-    event_detail = EventDetail(**vars(event))
-    event_detail.publisher = db\
-        .query(User)\
-        .filter_by(uid=event.publisher)\
-        .first()\
-        .nick
+    event["publisher"] = aid_to_nick(db, event["publisher"])
+    event["category"] = event["ecid"]
+
+    event_detail = EventDetail(**event)
 
     return event_detail
 
@@ -127,17 +114,15 @@ class ParticipationItem(BaseModel):
 
 @router.get("/participations", response_model=list[ParticipationItem])
 def get_participations(
-    eid: int,
-    page: int = 1,
-    size: int = 8,
-    db: Session = Depends(get_db)
+    eid: int, page: int = 1, size: int = 8, db: Session = Depends(get_db)
 ):
-    participations = db\
-        .query(Participation, User, Event)\
-        .join(User, Participation.uid == User.uid)\
-        .join(Event, Participation.eid == Event.eid)\
-        .filter_by(eid=eid)\
+    participations = (
+        db.query(Participation, User, Event)
+        .join(User, Participation.uid == User.uid)
+        .join(Event, Participation.eid == Event.eid)
+        .filter_by(eid=eid)
         .order_by(Participation.signup_time.desc())
+    )
     participations = participations.offset((page - 1) * size)
     participations = participations.limit(size)
     participations = participations.all()
@@ -149,7 +134,7 @@ def get_participations(
             eid=participation.eid,
             event_title=event.title,
             participation_time=participation.signin_time,
-            place=participation.signin_location
+            place=participation.signin_location,
         )
         for participation, user, event in participations
     ]
@@ -162,17 +147,13 @@ def sign_up(
     request: Request,
     eid: int,
     uid: str = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    event = db\
-        .query(Event)\
-        .filter_by(eid=eid)\
-        .first()
+    event = db.query(Event).filter_by(eid=eid).first()
 
     if not event:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="您报名的活动不存在"
+            status_code=status.HTTP_404_NOT_FOUND, detail="您报名的活动不存在"
         )
 
     try:
@@ -193,7 +174,7 @@ def sign_up(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred when creating event: {e}"
+            detail=f"An error occurred when creating event: {e}",
         )
 
 
@@ -202,24 +183,18 @@ def sign_up(
     request: Request,
     eid: int,
     uid: str = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    event = db\
-        .query(Event)\
-        .filter_by(eid=eid)\
-        .first()
+    event = db.query(Event).filter_by(eid=eid).first()
 
     if not event:
-        raise HTTPException(
-            detail="您报名的活动不存在"
-        )
+        raise HTTPException(detail="您报名的活动不存在")
 
     current_time = int(time.time())
 
-    if (current_time > event.end_signup_time):
+    if current_time > event.end_signup_time:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="报名已截止"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="报名已截止"
         )
 
     try:
@@ -240,7 +215,7 @@ def sign_up(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred when creating event: {e}"
+            detail=f"An error occurred when creating event: {e}",
         )
 
 
@@ -250,26 +225,26 @@ def sign_in(
     eid: int,
     uid: str = Depends(get_current_user),
     location: str = Form(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    participation, event = db\
-        .query(Participation, Event)\
-        .join(Event, Participation.eid == Event.eid)\
-        .filter_by(eid=eid, uid=uid)\
+    participation, event = (
+        db.query(Participation, Event)
+        .join(Event, Participation.eid == Event.eid)
+        .filter_by(eid=eid, uid=uid)
         .first()
+    )
 
     if not participation or not event:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="您签到的活动不存在，或者未成功报名"
+            detail="您签到的活动不存在，或者未成功报名",
         )
 
     current_time = int(time.time())
 
     if current_time > event.end_signin_time:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="签到已截止"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="签到已截止"
         )
 
     participation.signin_time = current_time
@@ -283,5 +258,5 @@ def sign_in(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred when signing up: {e}"
+            detail=f"An error occurred when signing up: {e}",
         )

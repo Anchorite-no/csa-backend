@@ -20,7 +20,7 @@ class Event(Base):
     end_signup_time = Column(Integer)
     start_signin_time = Column(Integer)
     end_signin_time = Column(Integer)
-    signin_location = Column(String(80))
+    signin_code = Column(String(16))
     place = Column(Text)
     publisher = Column(String(36))
     first_publish = Column(Integer)

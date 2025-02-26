@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from markdown import markdown
 from html2text import HTML2Text
 
+from misc.model import aid_to_nick
 from models import get_db
 from models.news import News
 from models.user import User
@@ -79,8 +80,6 @@ def get_news_detail(nid: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="新闻未找到")
 
     news = NewsDetail(**vars(news))
-    news.publisher = db.query(User).filter_by(uid=news.publisher).first().nick
-
-
+    news.publisher = aid_to_nick(db, news.publisher)
 
     return news

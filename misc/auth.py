@@ -40,7 +40,7 @@ def create_access_token(
     return encoded_jwt
 
 def create_access_token_admin(
-        uid: str, aid: str, expires_delta: timedelta = timedelta(hours=1), **extra_data
+        uid: str, aid: int, expires_delta: timedelta = timedelta(hours=1), **extra_data
 ) -> str:
     to_encode = extra_data.copy()
     expire = int(time.time()) + expires_delta.total_seconds()
@@ -81,6 +81,23 @@ async def get_current_admin(token: str = Depends(oauth2_scheme)):
     except JWTError:
         raise credentials_exception
 
+    return aid
+
+async def get_current_admin_uid(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY_ADMIN, algorithms=ALGORITHM)
+        uid = payload.get("uid")
+        aid = payload.get("aid")
+
+        if not uid:
+            raise credentials_exception
+
+        if not aid:
+            raise credentials_exception_admin
+
+    except JWTError:
+        raise credentials_exception
+
     return uid
 
 
@@ -98,18 +115,17 @@ async def login_required_admin(token: str = Depends(oauth2_scheme)):
         jwt.decode(token, SECRET_KEY_ADMIN, algorithms=ALGORITHM)
 
     except JWTError:
-        raise credentials_exception
+        raise credentials_exception_admin
 
     return True
 
-def hash_passwd(passwd: str) -> str:
+def hash_passwd(passwd: str) -> bytes:
     pwd_bytes = passwd.encode("utf-8")
     salt = bcrypt.gensalt()
     hashed_password = bcrypt.hashpw(password=pwd_bytes, salt=salt)
     return hashed_password
 
 
-def verify_passwd(plain: str, hashed: str) -> bool:
+def verify_passwd(plain: str, hashed: bytes) -> bool:
     plain = plain.encode("utf-8")
-    hashed = hashed.encode("utf-8")
     return bcrypt.checkpw(password=plain, hashed_password=hashed)

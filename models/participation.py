@@ -6,6 +6,7 @@ from . import Base
 class Participation(Base):
     __tablename__ = "participation"
 
+    pid = Column(Integer, primary_key=True, autoincrement=True)
     uid = Column(
         String(36),
         ForeignKey('users.uid'),

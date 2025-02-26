@@ -19,7 +19,6 @@ def generate_seid() -> str:
     # generate 24 random characters
     return "".join(random.choices(string.ascii_letters + string.digits, k=24))
 
-
 class NewSession(BaseModel):
     seid: str
     uid: str
@@ -97,7 +96,7 @@ def create_new_sess(code: str, db: Session = Depends(get_db)) -> NewSession:
 
 
 @router.get("/miniapp_code")
-def get_miniapp_code(seid: str, db: Session = Depends(get_db())) -> ResponseMiniappCode:
+def get_miniapp_code(seid: str, db: Session = Depends(get_db)) -> ResponseMiniappCode:
     register = db.query(Register).filter(Register.seid == seid).first()
     if not register:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -109,7 +108,7 @@ def get_miniapp_code(seid: str, db: Session = Depends(get_db())) -> ResponseMini
 
 
 @router.get("/miniapp_submit")
-def submit_miniapp(data: SubmitMiniappInfo, db: Session = Depends(get_db())):
+def submit_miniapp(data: SubmitMiniappInfo, db: Session = Depends(get_db)):
     register = db.query(Register).filter(Register.seid == data.seid).first()
     if not register:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -141,7 +140,7 @@ def submit_miniapp(data: SubmitMiniappInfo, db: Session = Depends(get_db())):
 
 
 @router.get("/miniapp_status")
-def get_miniapp_status(data: RequestMiniappStatus, db: Session = Depends(get_db())):
+def get_miniapp_status(data: RequestMiniappStatus, db: Session = Depends(get_db)):
     register = db.query(Register).filter(Register.seid == data.seid).first()
     if not register:
         raise HTTPException(status_code=404, detail="Session not found")

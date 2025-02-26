@@ -9,8 +9,22 @@ class Role(Base):
     __tablename__ = 'roles'
 
     rid = Column(Integer, primary_key=True, index=True)
-    role_name = Column(String, unique=True, index=True)
-    description = Column(String)
+
+    @declared_attr
+    def role_name(cls):
+        if cls.__name__ == 'User_Role':
+            return Column(String, default="会员", unique=True)
+        elif cls.__name__ == 'Admin_Role':
+            return Column(String, default="管理员", unique=True)
+        return Column(String, unique=True)
+    
+    @declared_attr
+    def description(cls):
+        if cls.__name__ == 'User_Role':
+            return Column(String, default="普通会员角色")
+        elif cls.__name__ == 'Admin_Role':
+            return Column(String, default="系统管理员角色")
+        return Column(String)
 
     @declared_attr
     def __mapper_args__(cls):
@@ -28,14 +42,6 @@ class User_Role(Role):
     __tablename__ = 'user_roles'
 
     rid = Column(Integer, ForeignKey('roles.rid', ondelete='CASCADE'), primary_key=True)
-
-    @declared_attr
-    def role_name(cls):
-        return Column(String, default="会员", unique=True)
-
-    @declared_attr
-    def description(cls):
-        return Column(String, default="普通会员角色")
 
     MEMBER = {"rid": 1, "role_name": "会员", "description": "普通会员角色"}
     OFFICER = {"rid": 2, "role_name": "干事", "description": "干事角色"}
@@ -61,14 +67,6 @@ class Admin_Role(Role):
     __tablename__ = 'admin_roles'
 
     rid = Column(Integer, ForeignKey('roles.rid', ondelete='CASCADE'), primary_key=True)
-
-    @declared_attr
-    def role_name(cls):
-        return Column(String, default="管理员", unique=True)
-
-    @declared_attr
-    def description(cls):
-        return Column(String, default="系统管理员角色")
 
     ADMIN = {"rid": 7, "role_name": "管理者", "description": "系统管理员"}
     PUBLISHER = {"rid": 8, "role_name": "发布者", "description": "内容发布者"}
