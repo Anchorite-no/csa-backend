@@ -13,7 +13,8 @@ class Event(Base):
     tag = Column(Text)
     image = Column(Text)
     description = Column(Text)
-    ecid = Column(Integer, ForeignKey('event_category.ecid'))
+    # ecid = Column(Integer, ForeignKey('event_category.ecid'))
+    ecid = Column(Integer)
     start_time = Column(Integer)
     end_time = Column(Integer)
     start_signup_time = Column(Integer)
@@ -26,8 +27,8 @@ class Event(Base):
     first_publish = Column(Integer)
     last_update = Column(Integer)
 
-    users = relationship(
-        "User",
-        secondary=Participation.__tablename__,
-        back_populates="events"
-    )
+    # users = relationship(
+    #     "User",
+    #     secondary=Participation.__tablename__,
+    #     back_populates="events"
+    # )

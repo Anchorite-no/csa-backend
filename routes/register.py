@@ -60,7 +60,7 @@ def create_new_sess(code: str, db: Session = Depends(get_db)) -> NewSession:
     }
 
     cas_resp = requests.get(cas_url, params=cas_data)
-
+    raise HTTPException(status_code=400, detail="CAS server error")
     if cas_resp.status_code != 200:
         raise HTTPException(status_code=400, detail="CAS server error")
 

@@ -29,7 +29,7 @@ router = APIRouter()
 class UserLogin(BaseModel):
     uid: Annotated[str, Field(pattern=r"^\d+$")]
     passwd: Annotated[
-        str, Field(min_length=3, max_length=30, pattern=r"^[a-zA-Z0-9_-]+$")
+        str, Field(min_length=64, max_length=64, pattern=r"^[a-zA-Z0-9_-]+$")
     ]
 
 
@@ -68,7 +68,7 @@ class AdminLogin(BaseModel):
     uid: Annotated[str, Field(pattern=r"^\d+$")]
     # aid: Annotated[str, Field(pattern=r'^\d+$')]
     passwd: Annotated[
-        str, Field(min_length=3, max_length=30, pattern=r"^[a-zA-Z0-9_-]+$")
+        str, Field(min_length=64, max_length=64, pattern=r"^[a-zA-Z0-9_-]+$")
     ]
 
 
@@ -87,7 +87,7 @@ def login(
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="用户未找到")
 
-    if not verify_passwd(data.passwd, user.passwd):
+    if not verify_passwd(data.passwd, user.passwd.encode("utf-8")):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="密码错误")
 
     admin = db.query(Admin).filter_by(aid=data.uid).first()

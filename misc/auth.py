@@ -68,19 +68,18 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 
 async def get_current_admin(token: str = Depends(oauth2_scheme)):
     try:
-        payload = jwt.decode(token, SECRET_KEY_ADMIN, algorithms=ALGORITHM)
-        uid = payload.get("uid")
-        aid = payload.get("aid")
-
-        if not uid:
-            raise credentials_exception
-
-        if not aid:
+        payload = jwt.decode(token, SECRET_KEY_ADMIN, algorithms=[ALGORITHM])
+        
+        uid: str = payload.get("uid")
+        aid: int = payload.get("aid")
+        # exp: datetime = datetime.fromtimestamp(payload.get("exp"))
+        
+        if not uid or not aid:
             raise credentials_exception_admin
-
+        
     except JWTError:
         raise credentials_exception
-
+    
     return aid
 
 async def get_current_admin_uid(token: str = Depends(oauth2_scheme)):
@@ -123,7 +122,7 @@ def hash_passwd(passwd: str) -> bytes:
     pwd_bytes = passwd.encode("utf-8")
     salt = bcrypt.gensalt()
     hashed_password = bcrypt.hashpw(password=pwd_bytes, salt=salt)
-    return hashed_password
+    return hashed_password.decode('utf-8')
 
 
 def verify_passwd(plain: str, hashed: bytes) -> bool:

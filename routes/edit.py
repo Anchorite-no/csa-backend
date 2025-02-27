@@ -136,12 +136,13 @@ def edit_event(
     db: Session = Depends(get_db),
     aid: str = Depends(get_current_admin),
 ):
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="当前用户没有权限进行此操作"
-        )
-
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN,
+    #         detail="当前用户没有权限进行此操作"
+    #     )
+    first_publish = 0
+    
     if data.eid:
         event = db.query(Event).filter_by(eid=data.eid).first()
         if not event:
