@@ -265,7 +265,12 @@ def register(data: UserRegister, db: Session = Depends(get_db)):
     return {"msg": "success"}
 
 
-@router.get("/participations", response_model=list[ParticipationItem])
+class ParticipationResponse(BaseModel):
+    count: int
+    result: list[ParticipationItem]
+
+
+@router.get("/participations", response_model=ParticipationResponse)
 def get_participations(
     uid: str = Depends(get_current_user),
     page: int = 1,
@@ -279,6 +284,9 @@ def get_participations(
         .filter_by(uid=uid)
         .order_by(Participation.signup_time.desc())
     )
+
+    count = participations.count()
+
     participations = participations.offset((page - 1) * size)
     participations = participations.limit(size)
     participations = participations.all()
@@ -295,4 +303,18 @@ def get_participations(
         for participation, user, event in participations
     ]
 
-    return participation_items
+    return ParticipationResponse(count=count, result=participation_items)
+
+
+@router.get("/check_participation")
+def check_participation(
+    uid: str = Depends(get_current_user),
+    eid: int = 0,
+    db: Session = Depends(get_db),
+):
+    participation = db.query(Participation).filter_by(uid=uid, eid=eid).first()
+
+    if not participation:
+        return {"msg": False}
+
+    return {"msg": True}

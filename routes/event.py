@@ -1,4 +1,5 @@
 import time
+from typing import Optional
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -6,7 +7,7 @@ from markdown import markdown
 from html2text import HTML2Text
 
 from misc.model import aid_to_nick
-from misc.auth import get_current_user
+from misc.auth import get_current_user, login_required_admin
 from models import get_db
 from models.participation import Participation
 from models.relation.user_event import user_event
@@ -81,6 +82,10 @@ class EventDetail(BaseModel):
     category: int
     image: str
     publisher: str
+    start_signin_time: Optional[int]
+    end_signin_time: Optional[int]
+    start_signup_time: Optional[int]
+    end_signup_time: Optional[int]
 
 
 @router.get("/detail", response_model=EventDetail)
@@ -89,7 +94,7 @@ def get_event_detail(eid: str, db: Session = Depends(get_db)):
 
     if not event:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="活动未找到")
-    
+
     event = vars(event)
 
     event["publisher"] = aid_to_nick(db, event["publisher"])
@@ -105,24 +110,33 @@ def get_event_detail(eid: str, db: Session = Depends(get_db)):
 
 class ParticipationItem(BaseModel):
     uid: str
-    # username: str unnecessary for uid available
+    nick: str
     eid: int
-    # event_title: str unnecessary for eid available
-    # participation_time: datetime
-    place: str
+    participation_time: int
 
 
-@router.get("/participations", response_model=list[ParticipationItem])
+class ParticipationResponse(BaseModel):
+    result: list[ParticipationItem]
+    count: int
+
+
+@router.get(
+    "/participations",
+    response_model=ParticipationResponse,
+    dependencies=[Depends(login_required_admin)],
+)
 def get_participations(
     eid: int, page: int = 1, size: int = 8, db: Session = Depends(get_db)
 ):
     participations = (
-        db.query(Participation, User, Event)
+        db.query(Participation, User)
         .join(User, Participation.uid == User.uid)
-        .join(Event, Participation.eid == Event.eid)
-        .filter_by(eid=eid)
+        .filter(Participation.eid == eid)
         .order_by(Participation.signup_time.desc())
     )
+
+    count = participations.count()
+
     participations = participations.offset((page - 1) * size)
     participations = participations.limit(size)
     participations = participations.all()
@@ -130,65 +144,33 @@ def get_participations(
     participation_items = [
         ParticipationItem(
             uid=participation.uid,
-            username=user.nick,
+            nick=user.nick,
             eid=participation.eid,
-            event_title=event.title,
             participation_time=participation.signin_time,
-            place=participation.signin_location,
         )
-        for participation, user, event in participations
+        for participation, user in participations
     ]
 
-    return participation_items
+    return ParticipationResponse(result=participation_items, count=count)
 
 
-@router.post("/sign-up", response_model=list[ParticipationItem])
+class SignupItem(BaseModel):
+    eid: int
+
+
+@router.post("/sign-up")
 def sign_up(
     request: Request,
-    eid: int,
+    data: SignupItem,
     uid: str = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    event = db.query(Event).filter_by(eid=eid).first()
+    event = db.query(Event).filter_by(eid=data.eid).first()
 
     if not event:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="您报名的活动不存在"
         )
-
-    try:
-        new_participation = Participation(
-            uid=uid,
-            eid=eid,
-            signup_time=int(time.time()),
-            signup_ip=request.client.host,
-            signin_time=None,
-            signin_ip=None,
-            signin_location=None,
-        )
-
-        db.add(new_participation)
-        db.commit()
-        return {"result": "sign up Successfully"}
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred when creating event: {e}",
-        )
-
-
-@router.post("/sign-up", response_model=list[ParticipationItem])
-def sign_up(
-    request: Request,
-    eid: int,
-    uid: str = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    event = db.query(Event).filter_by(eid=eid).first()
-
-    if not event:
-        raise HTTPException(detail="您报名的活动不存在")
 
     current_time = int(time.time())
 
@@ -200,7 +182,7 @@ def sign_up(
     try:
         new_participation = Participation(
             uid=uid,
-            eid=eid,
+            eid=data.eid,
             signup_time=current_time,
             signup_ip=request.client.host,
             signin_time=None,
@@ -210,7 +192,7 @@ def sign_up(
 
         db.add(new_participation)
         db.commit()
-        return {"result": "sign up Successfully"}
+        return {"msg": "success"}
     except Exception as e:
         db.rollback()
         raise HTTPException(
@@ -219,18 +201,22 @@ def sign_up(
         )
 
 
-@router.post("/sign-in", response_model=list[ParticipationItem])
+class SignInItem(BaseModel):
+    eid: int
+    signin_code: str
+
+
+@router.post("/sign-in")
 def sign_in(
     request: Request,
-    eid: int,
+    data: SignInItem,
     uid: str = Depends(get_current_user),
-    location: str = Form(...),
     db: Session = Depends(get_db),
 ):
     participation, event = (
         db.query(Participation, Event)
         .join(Event, Participation.eid == Event.eid)
-        .filter_by(eid=eid, uid=uid)
+        .filter_by(eid=data.eid, uid=uid)
         .first()
     )
 
@@ -247,13 +233,17 @@ def sign_in(
             status_code=status.HTTP_400_BAD_REQUEST, detail="签到已截止"
         )
 
+    if event.signin_code != data.signin_code:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="签到码错误"
+        )
+
     participation.signin_time = current_time
     participation.signin_ip = request.client.host
-    participation.signin_location = location
 
     try:
         db.commit()
-        return {"result": "sign in Successfully"}
+        return {"msg": "success"}
     except Exception as e:
         db.rollback()
         raise HTTPException(

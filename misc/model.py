@@ -8,7 +8,8 @@ def create_admin():
     db = list(get_db())[0]
     has_user = db.query(User).count()
     if not has_user:
-        passwd = hash_passwd(sha256("admin123".encode("utf-8")).hexdigest())
+        passwd = sha256("admin123".encode("utf-8")).hexdigest()
+        passwd = hash_passwd(passwd)
         user = User(uid="00001", email="root@localhost", nick="管理员", passwd=passwd)
         admin = Admin(uid="00001", is_active=True, role_id=7)
         db.add(user)

@@ -118,7 +118,7 @@ async def login_required_admin(token: str = Depends(oauth2_scheme)):
 
     return True
 
-def hash_passwd(passwd: str) -> bytes:
+def hash_passwd(passwd: str) -> str:
     pwd_bytes = passwd.encode("utf-8")
     salt = bcrypt.gensalt()
     hashed_password = bcrypt.hashpw(password=pwd_bytes, salt=salt)

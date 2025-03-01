@@ -30,16 +30,14 @@ def edit_news(
 ):
     if not is_manager(db, aid):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="当前用户没有权限进行此操作"
+            status_code=status.HTTP_403_FORBIDDEN, detail="当前用户没有权限进行此操作"
         )
 
     if data.nid:
         news = db.query(News).filter_by(nid=data.nid).first()
         if not news:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="新闻未找到"
+                status_code=status.HTTP_404_NOT_FOUND, detail="新闻未找到"
             )
     else:
         news = News()
@@ -58,12 +56,12 @@ def edit_news(
             db.add(news)
 
         db.commit()
-    
+
     except Exception as e:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred when editing news: {e}"
+            detail=f"An error occurred when editing news: {e}",
         )
 
     return news.nid
@@ -82,17 +80,14 @@ def edit_event_category(
 ):
     if not is_manager(db, aid):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="当前用户没有权限进行此操作"
+            status_code=status.HTTP_403_FORBIDDEN, detail="当前用户没有权限进行此操作"
         )
 
     if data.ecid:
-        event_category = db.query(EventCategory).filter_by(
-            ecid=data.ecid).first()
+        event_category = db.query(EventCategory).filter_by(ecid=data.ecid).first()
         if not event_category:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="活动类型未找到"
+                status_code=status.HTTP_404_NOT_FOUND, detail="活动类型未找到"
             )
     else:
         event_category = EventCategory()
@@ -104,14 +99,14 @@ def edit_event_category(
             db.add(event_category)
 
         db.commit()
-    
+
     except Exception as e:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred when editing event: {e}"
+            detail=f"An error occurred when editing event: {e}",
         )
-    
+
     return data.eid
 
 
@@ -124,11 +119,10 @@ class EditEvent(BaseModel):
     category: int
     start_time: int
     end_time: int
+    place: str
     start_signup_time: Optional[int] = None
     end_signup_time: Optional[int] = None
-    start_signin_time: Optional[int] = None
-    end_signin_time: Optional[int] = None
-    place: str
+
 
 @router.post("/event")
 def edit_event(
@@ -142,13 +136,12 @@ def edit_event(
     #         detail="当前用户没有权限进行此操作"
     #     )
     first_publish = 0
-    
+
     if data.eid:
         event = db.query(Event).filter_by(eid=data.eid).first()
         if not event:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="活动未找到"
+                status_code=status.HTTP_404_NOT_FOUND, detail="活动未找到"
             )
     else:
         event = Event()
@@ -162,8 +155,6 @@ def edit_event(
     event.end_time = data.end_time - data.end_time % 60
     event.start_signup_time = data.start_signup_time
     event.end_signup_time = data.end_signup_time
-    event.start_signin_time = data.start_signin_time
-    event.end_signin_time = data.end_signin_time
     event.place = data.place
     event.last_update = int(time.time())
 
@@ -179,7 +170,39 @@ def edit_event(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred when editing event: {e}"
+            detail=f"An error occurred when editing event: {e}",
         )
-    
+
     return data.eid
+
+
+class EditSignin(BaseModel):
+    eid: int
+    start_signin_time: int
+    end_signin_time: int
+    signin_code: str
+
+
+@router.post("/signin")
+def edit_signin(
+    data: EditSignin,
+    db: Session = Depends(get_db),
+):
+    event = db.query(Event).filter_by(eid=data.eid).first()
+    if not event:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="活动未找到")
+
+    event.start_signin_time = data.start_signin_time
+    event.end_signin_time = data.end_signin_time
+    event.signin_code = data.signin_code
+
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred when editing event: {e}",
+        )
+
+    return {"msg": "success"}

@@ -19,7 +19,6 @@ class Participation(Base):
     signup_ip = Column(String(64))
     signin_time = Column(Integer)  # null if not signing in
     signin_ip = Column(String(64))
-    signin_location = Column(String(64))
 
     # 创建eid和uid的唯一索引
     __table_args__ = (
