@@ -1,7 +1,7 @@
 import time
 from datetime import timedelta
 from hashlib import sha256
-from typing import Annotated
+from typing import Annotated, Optional
 
 import requests
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -39,25 +39,34 @@ class UserToken(BaseModel):
 
 
 class UserPasswd(BaseModel):
-    old: Annotated[str, Field(min_length=3, max_length=30, pattern=r"^[a-zA-Z0-9_-]+$")]
-    new: Annotated[str, Field(min_length=3, max_length=30, pattern=r"^[a-zA-Z0-9_-]+$")]
+    old: Annotated[
+        str, Field(min_length=64, max_length=64, pattern=r"^[a-zA-Z0-9_-]+$")
+    ]
+    new: Annotated[
+        str, Field(min_length=64, max_length=64, pattern=r"^[a-zA-Z0-9_-]+$")
+    ]
 
 
 class UserRegister(BaseModel):
     uid: Annotated[str, Field(pattern=r"^\d+$")]
-    nick: Annotated[
-        str, Field(min_length=3, max_length=30, pattern=r"^[a-zA-Z0-9_-]+$")
-    ]
+    nick: Annotated[str, Field(min_length=2, max_length=30)]
     code: str
     email: EmailStr
 
 
+class ConciseEvent(BaseModel):
+    eid: int
+    title: str
+    start_time: int
+    end_time: int
+    place: str
+    image: str
+
 class ParticipationItem(BaseModel):
     uid: str
-    username: str
-    eid: int
-    event_title: str
-    place: str
+    nick: str
+    signin_time: Optional[int] = None
+    event: ConciseEvent
 
 
 class WxUserLogin(BaseModel):
@@ -208,7 +217,7 @@ def passwd(
     return {"result": "PasswdReset Successfully"}
 
 
-@router.post("/register", response_model=UserToken, tags=["user"])
+@router.post("/register", tags=["user"])
 def register(data: UserRegister, db: Session = Depends(get_db)):
 
     miniapp_url = "https://api.weixin.qq.com/sns/jscode2session"
@@ -220,6 +229,8 @@ def register(data: UserRegister, db: Session = Depends(get_db)):
     }
 
     miniapp_resp = requests.get(miniapp_url, params=miniapp_params)
+
+    print(miniapp_resp.json())
 
     if miniapp_resp.status_code != 200:
         raise HTTPException(status_code=400, detail="Miniapp server error")
@@ -240,6 +251,12 @@ def register(data: UserRegister, db: Session = Depends(get_db)):
     if email:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="邮箱已被注册"
+        )
+    
+    existed = db.query(User).filter_by(openid=openid).first()
+    if existed:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="该微信已被绑定"
         )
 
     try:
@@ -281,7 +298,7 @@ def get_participations(
         db.query(Participation, User, Event)
         .join(User, Participation.uid == User.uid)
         .join(Event, Participation.eid == Event.eid)
-        .filter_by(uid=uid)
+        .filter(Participation.uid == uid)
         .order_by(Participation.signup_time.desc())
     )
 
@@ -294,11 +311,54 @@ def get_participations(
     participation_items = [
         ParticipationItem(
             uid=participation.uid,
-            username=user.nick,
-            eid=participation.eid,
-            event_title=event.title,
-            participation_time=participation.signin_time,  # 签到时间
-            place=participation.signin_location,  # 签到地点
+            nick=user.nick,
+            signin_time=participation.signin_time,  # 签到时间
+            event=ConciseEvent(
+                eid=event.eid,
+                title=event.title,
+                start_time=event.start_time,
+                end_time=event.end_time,
+                place=event.place,
+                image=event.image,
+            ),
+        )
+        for participation, user, event in participations
+    ]
+
+    return ParticipationResponse(count=count, result=participation_items)
+
+
+@router.get("/available_event", response_model=ParticipationResponse)
+def get_available_event(
+    uid: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    participations = (
+        db.query(Participation, User, Event)
+        .join(User, Participation.uid == User.uid)
+        .join(Event, Participation.eid == Event.eid)
+        .filter(Participation.uid == uid)
+        .filter(Event.end_signin_time > int(time.time()))
+        .filter(Event.start_signin_time < int(time.time()))
+        .order_by(Participation.signup_time.desc())
+    )
+
+    count = participations.count()
+    participations = participations.all()
+
+    participation_items = [
+        ParticipationItem(
+            uid=participation.uid,
+            nick=user.nick,
+            signin_time=participation.signin_time,  # 签到时间
+            event=ConciseEvent(
+                eid=event.eid,
+                title=event.title,
+                start_time=event.start_time,
+                end_time=event.end_time,
+                place=event.place,
+                image=event.image,
+            ),
         )
         for participation, user, event in participations
     ]

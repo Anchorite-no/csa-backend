@@ -187,7 +187,6 @@ def sign_up(
             signup_ip=request.client.host,
             signin_time=None,
             signin_ip=None,
-            signin_location=None,
         )
 
         db.add(new_participation)
@@ -216,7 +215,8 @@ def sign_in(
     participation, event = (
         db.query(Participation, Event)
         .join(Event, Participation.eid == Event.eid)
-        .filter_by(eid=data.eid, uid=uid)
+        .filter(Participation.eid == data.eid)
+        .filter(Participation.uid == uid)
         .first()
     )
 
