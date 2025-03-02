@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     CAS_APP_ID: str = ""
     CAS_APP_SECRET: str = ""
     CAS_REDIRECT_URI: str = ""
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 995
+    SMTP_USER: str = ""
+    SMTP_PASSWD: str = ""
 
     class Config:
         env_file = ".env"

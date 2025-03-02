@@ -17,12 +17,12 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/user/token")
 credentials_exception = HTTPException(
     status_code=401,
-    detail="无法验证用户信息",
+    detail="验证用户失败，请重新登录",
     headers={"WWW-Authenticate": "Bearer"},
 )
 credentials_exception_admin = HTTPException(
     status_code=401,
-    detail="无法验证管理员信息",
+    detail="验证管理员失败，请重新登录",
     headers={"WWW-Authenticate": "Bearer"},
 )
 

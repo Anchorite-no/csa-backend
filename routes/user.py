@@ -2,6 +2,9 @@ import time
 from datetime import timedelta
 from hashlib import sha256
 from typing import Annotated, Optional
+import smtplib
+from email.mime.text import MIMEText
+from email.header import Header
 
 import requests
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -52,6 +55,7 @@ class UserRegister(BaseModel):
     nick: Annotated[str, Field(min_length=2, max_length=30)]
     code: str
     email: EmailStr
+    verify_code: str
 
 
 class ConciseEvent(BaseModel):
@@ -61,6 +65,7 @@ class ConciseEvent(BaseModel):
     end_time: int
     place: str
     image: str
+
 
 class ParticipationItem(BaseModel):
     uid: str
@@ -140,12 +145,12 @@ def wxlogin(data: WxUserLogin, db: Session = Depends(get_db)):
     openid = miniapp_resp_json.get("openid")
 
     if not openid:
-        raise HTTPException(status_code=400, detail="Invalid code")
+        raise HTTPException(status_code=400, detail="微信登录错误")
 
     user = db.query(User).filter_by(openid=openid).first()
 
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="用户未找到")
 
     token = create_access_token(user.uid, timedelta(hours=2), nick=user.nick)
 
@@ -217,6 +222,60 @@ def passwd(
     return {"result": "PasswdReset Successfully"}
 
 
+class UserID(BaseModel):
+    uid: str
+
+
+@router.post("/verify_code", tags=["user"])
+def verify(data: UserID):
+    host = get_config("SMTP_HOST")
+    port = get_config("SMTP_PORT")
+    user = get_config("SMTP_USER")
+    passwd = get_config("SMTP_PASSWD")
+
+    token = get_config("CSA_SECRET_KEY")
+    date = time.strftime("%Y-%m-%d", time.localtime())
+
+    verify_code = sha256(f"{data.uid}{token}{date}".encode()).hexdigest()
+    verify_code = int(verify_code, 16) % 1000000
+    verify_code = str(verify_code).zfill(6)
+
+    title = "验证码 - 浙江大学学生网络空间安全协会"
+    content = f"""亲爱的同学:
+
+感谢您选择加入浙江大学学生网络空间安全协会！
+您的验证码是: {verify_code}
+
+浙江大学学生网络空间安全协会
+    """
+    
+    message = MIMEText(content, 'plain', 'utf-8')
+    message['From'] = Header("ZJUCSA", 'ascii')
+    message['To'] =  Header(data.uid, 'ascii')
+    message['Subject'] = Header(title, 'utf-8')
+    
+    if not data.uid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="请检查学号",
+        )
+    
+    target = data.uid + "@zju.edu.cn"
+
+    try:
+        server = smtplib.SMTP_SSL(host, port)
+        server.login(user, passwd)
+        server.sendmail(user, target, message.as_string())
+        server.quit()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"验证码发送失败",
+        )
+    
+    return {"msg": "success"}
+
+
 @router.post("/register", tags=["user"])
 def register(data: UserRegister, db: Session = Depends(get_db)):
 
@@ -252,11 +311,22 @@ def register(data: UserRegister, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="邮箱已被注册"
         )
-    
+
     existed = db.query(User).filter_by(openid=openid).first()
     if existed:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="该微信已被绑定"
+        )
+
+    token = get_config("CSA_SECRET_KEY")
+    date = time.strftime("%Y-%m-%d", time.localtime())
+    verify_code = sha256(f"{data.uid}{token}{date}".encode()).hexdigest()
+    verify_code = int(verify_code, 16) % 1000000
+    verify_code = str(verify_code).zfill(6)
+
+    if verify_code != data.verify_code:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="验证码错误"
         )
 
     try:
