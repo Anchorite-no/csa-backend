@@ -132,6 +132,7 @@ def get_participations(
         db.query(Participation, User)
         .join(User, Participation.uid == User.uid)
         .filter(Participation.eid == eid)
+        .filter(Participation.signin_time != None)
         .order_by(Participation.signup_time.desc())
     )
 
