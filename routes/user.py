@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
+import csv
 
 from config import get_config
 from misc.auth import (
@@ -122,6 +123,9 @@ def login(
         aid=admin.aid, uid=user.uid, expires_delta=timedelta(hours=2), nick=user.nick
     )
 
+    user.last_login = int(time.time())
+    db.commit()
+
     return AdminToken(access_token=admin_token)
 
 
@@ -155,6 +159,7 @@ def wxlogin(data: WxUserLogin, db: Session = Depends(get_db)):
     token = create_access_token(user.uid, timedelta(hours=2), nick=user.nick)
 
     user.last_login = int(time.time())
+    db.commit()
 
     return UserToken(access_token=token)
 
@@ -174,6 +179,7 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
     token = create_access_token(user.uid, timedelta(hours=2), nick=user.nick)
 
     user.last_login = int(time.time())
+    db.commit()
 
     return UserToken(access_token=token)
 
@@ -193,6 +199,7 @@ def token(data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
     token = create_access_token(user.uid, timedelta(hours=2), nick=user.nick)
 
     user.last_login = int(time.time())
+    db.commit()
 
     return UserToken(access_token=token)
 

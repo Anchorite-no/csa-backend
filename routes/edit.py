@@ -10,6 +10,7 @@ from models import get_db
 from models.event import Event
 from models.event_category import EventCategory
 from models.news import News
+from models.participation import Participation
 from routes.admin import is_manager
 
 router = APIRouter()

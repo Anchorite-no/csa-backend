@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, constr, EmailStr, Field
-from typing import Annotated
+from typing import Annotated, Optional
 from sqlalchemy.orm import Session
 
 from misc.auth import (
@@ -23,21 +23,22 @@ router = APIRouter()
 class AdminAuthorization(BaseModel):
     # aid_author: Annotated[str, Field(pattern=r'^\d+$')]
     uid_authored: Annotated[str, Field(pattern=r"^\d+$")]
-    rid_authored: Annotated[str, Field(pattern=r"^\d+$")]
+    rid_authored: int
 
 
 class AdminDeauthorization(BaseModel):
     uid_deauthored: Annotated[str, Field(pattern=r"^\d+$")]
-    rid_deauthored: Annotated[str, Field(pattern=r"^\d+$")]
+    rid_deauthored: Optional[int] = None
 
 
 class UserItem(BaseModel):
-    uid: Annotated[str, Field(pattern=r"^\d+$")]
-    nick: Annotated[
-        str, Field(min_length=3, max_length=30, pattern=r"^[a-zA-Z0-9_-]+$")
-    ]
-    email: EmailStr
-    last_login: int
+    uid: str
+    nick: str
+    email: str
+    rid: Optional[int]
+    is_admin: bool
+    admin_rid: Optional[int]
+    last_login: Optional[int]
 
 
 class UserRoleUpdate(BaseModel):
@@ -67,16 +68,10 @@ def admin_authorization(
             status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
         )
     try:
-        user = db.query(User).filter(uid=data.uid_authored).first()
+        user = db.query(User).filter_by(uid=data.uid_authored).first()
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="目标用户未找到"
-            )
-
-        admin_role = db.query(Admin_Role).filter(rid=data.rid_authored).first()
-        if not admin_role:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="管理员角色未找到"
             )
 
         new_admin = Admin(
@@ -106,37 +101,24 @@ def admin_deauthorization(
             status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
         )
 
-    user = db.query(User).filter(uid=data.uid_deauthored).first()
+    user = db.query(User).filter_by(uid=data.uid_deauthored).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="目标用户未找到"
         )
     try:
+        existing_admin = db.query(Admin).filter_by(uid=data.uid_deauthored).first()
+        if not existing_admin:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="该用户不是管理员"
+            )
+
         if data.rid_deauthored:
-            admin_role = db.query(Admin_Role).filter(rid=data.rid_deauthored).first()
-            if not admin_role:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, detail="管理员角色未找到"
-                )
-
-            existing_admin = db.query(Admin).filter(uid=data.uid_deauthored).first()
-            if not existing_admin:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, detail="该用户不是管理员"
-                )
-
-            existing_admin.role = admin_role
-            db.commit()
-
+            existing_admin.role_id = data.rid_deauthored
         else:
-            existing_admin = db.query(Admin).filter(uid=data.uid_deauthored).first()
-            if not existing_admin:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, detail="该用户不是管理员"
-                )
-
             db.delete(existing_admin)
-            db.commit()
+
+        db.commit()
 
     except Exception as e:
         db.rollback()
@@ -147,21 +129,46 @@ def admin_deauthorization(
     return {"msg": "用户管理员权限已成功撤销或修改"}
 
 
-@router.post("/user_list", response_model=list[UserItem], tags=["admin"])
-def show_user_list(db: Session = Depends(get_db)):
-    users = db.query(User).all()
+@router.get("/user_count", tags=["admin"])
+def show_user_count(
+    db: Session = Depends(get_db),
+    aid: str = Depends(get_current_admin),
+):
+    if not is_manager(db, aid):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+        )
+
+    user_count = db.query(User).count()
+    return {"user_count": user_count}
+
+
+@router.get("/user_list", response_model=list[UserItem], tags=["admin"])
+def show_user_list(
+    page: int = 1, size: int = 8, s: str = None, db: Session = Depends(get_db)
+):
+    users = db.query(User, Admin)
+    users = users.outerjoin(Admin, User.uid == Admin.uid)
+    if s:
+        users = users.filter((User.uid.like(f"%{s}%")) | (User.nick.like(f"%{s}%")))
+    
+    users = users.limit(size).offset((page - 1) * size)
+    users = users.all()
 
     user_list = [
-        {
-            "uid": user.uid,
-            "nick": user.nick,
-            "email": user.email,
-            "last_login": user.last_login,
-        }
+        UserItem(
+            uid=user[0].uid,
+            nick=user[0].nick,
+            email=user[0].email,
+            rid=user[0].role_id,
+            is_admin=user[1] is not None,
+            admin_rid=user[1].role_id if user[1] else None,
+            last_login=user[0].last_login,
+        )
         for user in users
     ]
 
-    return {"user_list": user_list}
+    return user_list
 
 
 @router.post("/delete_user", tags=["admin"])
@@ -185,15 +192,6 @@ def delete_user(
             db.delete(admin)
             db.commit()
 
-        db.query(user_role_association).filter(uid=data.uid).delete()
-        db.commit()
-
-        db.query(admin_role_association).filter(uid=data.uid).delete()
-        db.commit()
-
-        db.query(user_event).filter(uid=data.uid).delete()
-        db.commit()
-
         db.delete(user)
         db.commit()
 
@@ -215,26 +213,14 @@ def update_user_role(
             status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
         )
 
-    user = db.query(User).filter(uid=data.uid).first()
+    user = db.query(User).filter_by(uid=data.uid).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="目标用户未找到"
         )
 
-    role = db.query(User_Role).filter(rid=data.rid).first()
-    if not role:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="目标角色未找到"
-        )
     try:
-        db.query(user_role_association).filter(
-            user_role_association.c.uid == data.uid
-        ).delete()
-
-        new_role_association = user_role_association.insert().values(
-            uid=data.uid, rid=data.rid
-        )
-        db.execute(new_role_association)
+        user.role_id = data.rid
         db.commit()
 
     except Exception as e:

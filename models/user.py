@@ -21,8 +21,7 @@ class User(Base):
     #     back_populates="users"
     # )
 
-    role_id = Column(Integer, ForeignKey('roles.rid'))
-    role = relationship("Role")
+    role_id = Column(Integer, default=1)
 
     def __repr__(self):
         return f"<User(uid={self.uid}, username={self.username}, role_id={self.role_id})>"

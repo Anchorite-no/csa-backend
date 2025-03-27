@@ -138,8 +138,10 @@ def get_participations(
 
     count = participations.count()
 
-    participations = participations.offset((page - 1) * size)
-    participations = participations.limit(size)
+    if size != 0:
+        participations = participations.offset((page - 1) * size)
+        participations = participations.limit(size)
+        
     participations = participations.all()
 
     participation_items = [
