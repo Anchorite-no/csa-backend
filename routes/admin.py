@@ -182,12 +182,12 @@ def delete_user(
             status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
         )
 
-    user = db.query(User).filter(uid=data.uid).first()
+    user = db.query(User).filter_by(uid=data.uid).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="用户未找到")
 
     try:
-        admin = db.query(Admin).filter(uid=data.uid).first()
+        admin = db.query(Admin).filter_by(uid=data.uid).first()
         if admin:
             db.delete(admin)
             db.commit()
