@@ -1,0 +1,989 @@
+
+
+
+
+
+
+
+
+
+<!doctype html>
+<html lang="zh-CN">
+
+
+<head>
+	<title>&nbsp;</title>
+	
+
+
+
+
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="Copyright" content="zfsoft" />	
+<link rel="icon" href="/jwglxt/logo/favicon.ico" type="image/x-icon" />
+<link rel="shortcut icon" href="/jwglxt/logo/favicon.ico" type="image/x-icon" />
+<style type="text/css">	
+	.active{font-weight: bolder;}
+	#navbar-tabs li{ margin-top: 2px;}
+	#navbar-tabs li a{ border-top: 2px solid transparent;}
+	#navbar-tabs li.active a{border-top: 2px solid #0770cd;}
+</style>
+
+
+	
+<!--jQuery核心框架库 -->
+<script type="text/javascript" src="/zftal-ui-v5-1.0.2-zjdx/assets/js/other_jquery/jquery-1.12.4.min.js?ver=29252209"></script>
+<script type="text/javascript" src="/zftal-ui-v5-1.0.2-zjdx/assets/js/jquery-migrate-1.4.1.min.js?ver=29252209"></script>
+<!--jQuery浏览器检测 -->
+<script type="text/javascript" src="/jwglxt/js/browse/browse-judge.js?ver=29252209"></script>
+<script type="text/javascript">
+    (function(){
+        //浏览器版本验证
+        var _broswer = broswer();
+        if(_broswer.msie==true||_broswer.safari==true||_broswer.mozilla==true||_broswer.chrome==true){
+            if(_broswer.msie==true&&_broswer.version<9){
+               window.location.href = _path+"/xtgl/init_cxBrowser.html";
+            }
+        }else{
+             window.location.href = _path+"/xtgl/init_cxBrowser.html";
+        }
+    })();
+</script>
+<script type="text/javascript">
+var _path 				= "/jwglxt";
+var _systemPath 		= "/jwglxt";
+var _stylePath 			= "/zftal-ui-v5-1.0.2-zjdx";
+var _reportPath 		= "http://10.71.33.109:8080/WebReport";
+var _refreshInterval	= "10";
+var _localeKey 			= "zh_CN";
+</script>
+<!--
+jquery.ui 需要在bootstrap之前加载，解决冲突问题
+http://blog.csdn.net/remote_roamer/article/details/14105999
+-->
+<script type="text/javascript" src="/zftal-ui-v5-1.0.2-zjdx/assets/js/jquery-ui-custom.contact-1.0.0.js?ver=29252209"></script>
+<!--Bootstrap布局框架-->
+<link rel="stylesheet" type="text/css" href="/zftal-ui-v5-1.0.2-zjdx/assets/plugins/bootstrap/css/bootstrap.min.css?ver=29252209" />
+<link rel="stylesheet" type="text/css" href="/zftal-ui-v5-1.0.2-zjdx/assets/css/error.css?ver=29252209" />
+<link rel="stylesheet" type="text/css" href="/zftal-ui-v5-1.0.2-zjdx/assets/css/zftal-ui.css?ver=29252209" />
+<script type="text/javascript" src="/zftal-ui-v5-1.0.2-zjdx/assets/plugins/bootstrap/js/bootstrap.min.js?ver=29252209" charset="utf-8"></script>
+<!--jQuery常用工具扩展库：基础工具,资源加载工具,元素尺寸相关工具 -->
+<script type="text/javascript" src="/zftal-ui-v5-1.0.2-zjdx/assets/js/zftal/jquery.utils.contact-min.js?ver=29252209" charset="utf-8"></script>
+<!--jQuery基础工具库：$.browser,$.cookie,$.actual等 -->
+<script type="text/javascript" src="/zftal-ui-v5-1.0.2-zjdx/assets/js/zftal/jquery.plugins.contact-min.js?ver=29252209" charset="utf-8"></script>
+<!--jQuery自定义event事件库 -->
+<script type="text/javascript" src="/zftal-ui-v5-1.0.2-zjdx/assets/js/zftal/jquery.events.contact-min.js?ver=29252209" charset="utf-8"></script>
+<!--JavaScript对象扩展库：Array,Date,Number,String -->
+<script type="text/javascript" src="/zftal-ui-v5-1.0.2-zjdx/assets/js/zftal/jquery.extends.contact-min.js?ver=29252209" charset="utf-8"></script>
+<!--Bootbox弹窗插件-->
+<link rel="stylesheet" type="text/css" href="/zftal-ui-v5-1.0.2-zjdx/assets/plugins/bootbox/css/bootbox.css?ver=29252209" />
+<!--
+<script src="/zftal-ui-v5-1.0.2-zjdx/assets/plugins/bootbox/bootbox.concat-min.js?ver=29252209" type="text/javascript" charset="utf-8"></script>
+-->
+<script src="/zftal-ui-v5-1.0.2-zjdx/assets/plugins/bootbox/bootbox.concat-zjdx-min.js?ver=29252209" type="text/javascript" charset="utf-8"></script>
+<script src="/zftal-ui-v5-1.0.2-zjdx/assets/plugins/bootbox/lang/zh_CN.js?ver=29252209" type="text/javascript" charset="utf-8"></script>
+
+<!--jQuery模拟滚动条库-->
+<link rel="stylesheet" type="text/css" href="/zftal-ui-v5-1.0.2-zjdx/assets/plugins/customscrollbar/css/jquery.mCustomScrollbar.min.css?ver=29252209" />
+<script type="text/javascript" src="/zftal-ui-v5-1.0.2-zjdx/assets/plugins/customscrollbar/js/jquery.mCustomScrollbar.min.js?ver=29252209" charset="utf-8"></script>
+<!--jQuery.chosen美化插件-->
+<link rel="stylesheet" type="text/css" href="/zftal-ui-v5-1.0.2-zjdx/assets/plugins/chosen/css/chosen-min.css?ver=29252209" />
+<script type="text/javascript" src="/zftal-ui-v5-1.0.2-zjdx/assets/plugins/chosen/jquery.choosen.concat-min.js?ver=29252209" charset="utf-8"></script>
+<script type="text/javascript" src="/zftal-ui-v5-1.0.2-zjdx/assets/plugins/chosen/lang/zh_CN-min.js?ver=29252209" charset="utf-8"></script>
+<script type="text/javascript" src="/zftal-ui-v5-1.0.2-zjdx/assets/js/utils/jquery.utils.pinyin.min.js?ver=29252209" charset="utf-8"></script>
+<!--[if lt IE 9]>
+<script type="text/javascript" src="/zftal-ui-v5-1.0.2-zjdx/assets/js/html5shiv.min.js?ver=29252209" charset="utf-8"></script>
+<script type="text/javascript" src="/zftal-ui-v5-1.0.2-zjdx/assets/js/respond.min.js?ver=29252209" charset="utf-8"></script>
+<![endif]-->
+<!--业务框架jQuery全局设置和通用函数库-->
+<script type="text/javascript" src="/jwglxt/js/jquery.zftal.contact-min.js?ver=29252209"></script>
+<!--国际化js库 -->
+<script type="text/javascript" src="/zftal-ui-v5-1.0.2-zjdx/assets/plugins/i18n/jquery.i18n-min.js?ver=29252209" charset="utf-8"></script>
+<!--全局国际化js. -->
+<script type="text/javascript" src="/jwglxt/js/globalweb/i18n-global_zh_CN.js?ver=29252209" charset="utf-8"></script>
+<!--业务框架前端脚本国际化库-->
+<script type="text/javascript" src="/zftal-ui-v5-1.0.2-zjdx/assets/js/zftal/lang/jquery.zftal_zh_CN-min.js?ver=29252209"></script>
+<!--密码强弱判断-->
+<script type="text/javascript" src="/zftal-ui-v5-1.0.2-zjdx/assets/js/utils/jquery.utils.strength.min.js?ver=29252209"></script>
+<!--浙大公用js库-->
+<script type="text/javascript" src="/jwglxt/js/jquery.zftal.contact.zjdx.js?ver=29252209"></script>
+	
+
+
+
+
+
+
+	
+<script type="text/javascript">
+    
+	var _path 		= ("undefined" == typeof _path) ? "/jwglxt" : _path;
+	var _systemPath = ("undefined" == typeof _systemPath) ? "/jwglxt" : _systemPath;
+	var _stylePath  = ("undefined" == typeof _stylePath) ? "/zftal-ui-v5-1.0.2-zjdx" : _stylePath;
+	var _reportPath = ("undefined" == typeof _reportPath) ? "http://10.71.33.109:8080/WebReport" : _reportPath;
+	var _localeKey 	= ("undefined" == typeof _localeKey) ? "zh_CN" : _localeKey;
+	
+	jQuery(function($){
+		$('[data-toggle*="validation"]').trigger("validation");
+		$('[data-toggle*="fixed"]').trigger("fixed");
+		if($.fn.tooltip){
+			$('[data-toggle*="tooltip"]').tooltip({container:'body'});
+		}
+	});
+	
+</script>
+<!--教务系统通用业务js引用:比如学年，学期等公共的信息会放在这里-->
+<script type="text/javascript" src="/jwglxt/js/globalweb/comp/i18n/jwglxt-common_zh_CN.js?ver=29252209"></script>
+<!--国际化js库 -->
+
+
+</head>
+<body>
+	<!-- 头部 开始 -->
+	<header class="navbar-inverse top2">
+		<div class="container" id="navbar_container">
+					<div class="container">
+			<div class="navbar-header">
+				<button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".bs-navbar-collapse">
+					<span class="sr-only"> 培养方案查询</span> 
+					<span class="icon-bar"></span> 
+					<span class="icon-bar"></span> 
+					<span class="icon-bar"></span>
+				</button>
+				<a href="#" id="topButton" class="navbar-brand" onclick="onClickMenu('/pyfagl/pyfaxxcx_cxPyfaxscxIndex.html','N153020')">
+					培养方案查询
+				</a>
+				<script type="text/javascript">
+					document.title="培养方案查询";
+				</script>
+			</div>
+		</div>
+<!-- navbar-end  -->
+		</div>
+	</header>
+	
+	<!--头部 结束 -->
+	<div style="width: 100%; padding: 0px; margin: 0px;" id="bodyContainer">
+		<!-- requestMap中的参数为系统级别控制参数，请勿删除 -->
+		<form id="requestMap">
+			 <input type="hidden" id="sessionUserKey" value="3220105108" /> 
+			 
+			 	<input type="hidden" id="gnmkdmKey" value="N153020" />
+			 
+			 
+		</form>
+		<div class="container container-func sl_all_bg" id="yhgnPage">
+			<div id="innerContainer">
+				<!-- 放置页面显示内容 -->
+				
+        
+<form name="form" onsubmit="return false;" method="post" class="form-horizontal sl_all_form" role="form">
+	  <div class="row">
+		  <div class="col-md-3 col-sm-6">
+		    <div class="form-group">
+		      <label for="" class="col-sm-4 control-label">年级</label>
+		      <div class="col-sm-8">
+		          <select name="synj_cx" id="synj_cx" class="form-control chosen-select">
+    <option value=""
+    >全部</option>
+    <option value="2027">2027</option>
+    <option value="2026">2026</option>
+    <option value="2025">2025</option>
+    <option value="2024" selected="selected">2024</option>
+    <option value="2023">2023</option>
+    <option value="2022">2022</option>
+    <option value="2021">2021</option>
+    <option value="2020">2020</option>
+    <option value="2019">2019</option>
+    <option value="2018">2018</option>
+    <option value="2017">2017</option>
+    <option value="2016">2016</option>
+    <option value="2015">2015</option>
+    <option value="2014">2014</option>
+    <option value="2013">2013</option>
+    <option value="2012">2012</option>
+    <option value="2011">2011</option>
+    <option value="2010">2010</option>
+    <option value="2009">2009</option>
+    <option value="2008">2008</option>
+    <option value="2007">2007</option>
+    <option value="2006">2006</option>
+    <option value="2005">2005</option>
+    <option value="2004">2004</option>
+    <option value="2003">2003</option>
+    <option value="2002">2002</option>
+
+
+</select>
+
+
+		          <SCRIPT type="text/javascript">
+		    	  	jQuery('#synj_cx').trigger("chosen");
+		    	  </SCRIPT>
+		      </div>
+		    </div>
+		  </div>	
+		  <div class="col-md-3 col-sm-6">
+		    <div class="form-group">
+		      <label for="" class="col-sm-4 control-label">学院</label>
+		      <div class="col-sm-8">
+		   		  <select name="xydm_cx" id="xydm_cx" class="form-control  chosen-select">
+    <option value=""
+    >全部</option>
+    <option value="00">教务处</option>
+    <option value="41">文学院</option>
+    <option value="42">历史学院</option>
+    <option value="43">哲学学院</option>
+    <option value="38">外国语学院</option>
+    <option value="25">传媒与国际文化学院</option>
+    <option value="56">艺术与考古学院</option>
+    <option value="01">经济学院</option>
+    <option value="A0">光华法学院</option>
+    <option value="03">教育学院</option>
+    <option value="20">管理学院</option>
+    <option value="24">公共管理学院</option>
+    <option value="48">公共体育与艺术部</option>
+    <option value="55">马克思主义学院</option>
+    <option value="82">数学科学学院</option>
+    <option value="32">物理学院</option>
+    <option value="77">化学系</option>
+    <option value="83">地球科学学院</option>
+    <option value="79">心理与行为科学系</option>
+    <option value="58">机械工程学院</option>
+    <option value="80">材料科学与工程学院</option>
+    <option value="59">能源工程学院</option>
+    <option value="10">电气工程学院</option>
+    <option value="12">建筑工程学院</option>
+    <option value="81">化学工程与生物工程学院</option>
+    <option value="74">海洋学院</option>
+    <option value="26">航空航天学院</option>
+    <option value="65">高分子科学与工程学系</option>
+    <option value="84">光电科学与工程学院</option>
+    <option value="85">信息与电子工程学院</option>
+    <option value="86">控制科学与工程学院</option>
+    <option value="21">计算机科学与技术学院</option>
+    <option value="22">软件学院</option>
+    <option value="15">生物医学工程与仪器科学学院</option>
+    <option value="07">生命科学学院</option>
+    <option value="13">生物系统工程与食品科学学院</option>
+    <option value="14">环境与资源学院</option>
+    <option value="16">农业与生物技术学院</option>
+    <option value="17">动物科学学院</option>
+    <option value="18">医学院</option>
+    <option value="19">药学院</option>
+    <option value="04">人文学院</option>
+    <option value="05">外国语言文化与国际交流学院</option>
+    <option value="23">国际教育学院</option>
+    <option value="27">浙江大学爱丁堡大学联合学院</option>
+    <option value="28">浙江大学伊利诺伊大学厄巴纳香槟校区联合学院</option>
+    <option value="29">国际联合学院（海宁国际校区）</option>
+    <option value="30">竺可桢学院</option>
+    <option value="31">计算中心</option>
+    <option value="33">校医院</option>
+    <option value="34">信息技术中心</option>
+    <option value="36">就业指导处</option>
+    <option value="37">学工部</option>
+    <option value="40">公体部</option>
+    <option value="44">图书馆</option>
+    <option value="45">人事处</option>
+    <option value="47">国际设计研究院</option>
+    <option value="49">中国西部发展研究院</option>
+    <option value="50">出版社</option>
+    <option value="51">思想政治理论教学科研部</option>
+    <option value="52">心理健康教育与咨询中心</option>
+    <option value="53">人武部</option>
+    <option value="57">国际联合商学院</option>
+    <option value="62">基础交叉研究院</option>
+    <option value="70">临床医学系</option>
+    <option value="71">口腔医学系</option>
+    <option value="72">基础医学系</option>
+    <option value="73">公共卫生系</option>
+    <option value="76">物理学系</option>
+    <option value="87">脑科学与脑医学系</option>
+    <option value="90">求是学院</option>
+    <option value="91">求是学院丹青学园</option>
+    <option value="92">求是学院云峰学园</option>
+    <option value="93">求是学院蓝田学园</option>
+    <option value="94">农业试验站</option>
+    <option value="95">实验室与设备管理处</option>
+    <option value="98">本科生院</option>
+    <option value="99">校共建专业</option>
+    <option value="U0">就业指导与服务中心</option>
+    <option value="U1">工学部</option>
+    <option value="U2">农业生命环境学部</option>
+    <option value="U3">团委</option>
+    <option value="U4">发展联络办公室</option>
+    <option value="U5">国际合作与交流处</option>
+    <option value="U6">港澳台事务办公室</option>
+    <option value="U7">创新创业学院</option>
+    <option value="U8">公共卫生学院</option>
+    <option value="U9">社会学系</option>
+
+
+</select>
+
+
+		   		  <SCRIPT type="text/javascript">
+		    	  	jQuery('#xydm_cx').trigger("chosen", {checkbox: {type: "xydm"}});
+		    	  </SCRIPT>
+		      </div>
+		    </div>
+		  </div>
+		  <div class="col-md-3 col-sm-6">
+		    <div class="form-group">
+		      <label for="" class="col-sm-4 control-label">专业名称</label>
+		      <div class="col-sm-8">
+		   		  <select name="zydm_cx" id="zydm_cx" class="form-control chosen-select">
+    <option value=""
+    >全部</option>
+    <option value="0101">经济学类</option>
+    <option value="0111">经济学（试验班）</option>
+    <option value="0112">经济学</option>
+    <option value="0113">经济学（留学生）</option>
+    <option value="0114">经济学（拔尖班）</option>
+    <option value="0115">经济学（国际学生）</option>
+    <option value="0121">金融学</option>
+    <option value="0122">金融学（试验班）</option>
+    <option value="0123">金融学（李志文商学班）</option>
+    <option value="0124">金融学（留学生）</option>
+    <option value="0125">金融学（国际学生）</option>
+    <option value="0126">数字金融（金融学-数学与应用数学）</option>
+    <option value="0127">科技创业投资</option>
+    <option value="0131">财政学</option>
+    <option value="0132">财政学（留学生）</option>
+    <option value="0141">国际经济与贸易</option>
+    <option value="0142">电子商务（经济）</option>
+    <option value="0143">国际经济与贸易（留学生）</option>
+    <option value="0144">国际经济与贸易（国际学生）</option>
+    <option value="0201">法学类</option>
+    <option value="0210">法学（数字法治卓越班）</option>
+    <option value="0211">法学</option>
+    <option value="0213">法学（第二学士学位）</option>
+    <option value="0221">政治学与行政学</option>
+    <option value="0301">教育学类</option>
+    <option value="0302">体育学类</option>
+    <option value="0311">教育学</option>
+    <option value="0312">公共事业管理</option>
+    <option value="0313">教育技术学</option>
+    <option value="0314">教育学（个性化）</option>
+    <option value="0320">智能体育工程</option>
+    <option value="0321">体育教育</option>
+    <option value="0323">运动训练</option>
+    <option value="0324">民族传统体育</option>
+    <option value="0325">体育产业管理</option>
+    <option value="0326">公共事业管理（体育）</option>
+    <option value="0327">运动训练（个性化）</option>
+    <option value="0328">体育经济与管理</option>
+    <option value="0329">武术与民族传统体育</option>
+    <option value="0330">运动训练（体艺部）</option>
+    <option value="0401">人文科学试验班</option>
+    <option value="0402">艺术设计类</option>
+    <option value="0403">人文科学试验班（外语）</option>
+    <option value="0411">哲学</option>
+    <option value="0412">哲学（强基计划）</option>
+    <option value="0413">哲学（拔尖班）</option>
+    <option value="0420">古典文献学</option>
+    <option value="0421">汉语言文学</option>
+    <option value="0422">古典文献</option>
+    <option value="0424">编辑出版学</option>
+    <option value="0426">汉语言文学（基地）</option>
+    <option value="0427">汉语言文学（民族班）</option>
+    <option value="0430">汉语言文学（强基计划）</option>
+    <option value="0431">新闻学</option>
+    <option value="0432">广播电视新闻学</option>
+    <option value="0433">广告学</option>
+    <option value="0434">汉语言文学（国际学生）</option>
+    <option value="0440">艺术与科技</option>
+    <option value="0441">艺术设计</option>
+    <option value="0442">美术学</option>
+    <option value="0443">工业设计（艺术方向）</option>
+    <option value="0444">视觉传达设计</option>
+    <option value="0445">环境设计</option>
+    <option value="0446">书法学</option>
+    <option value="0447">中国画</option>
+    <option value="0448">考古学</option>
+    <option value="0451">国际政治</option>
+    <option value="0452">对外汉语</option>
+    <option value="0461">历史学</option>
+    <option value="0463">博物馆学</option>
+    <option value="0465">信息资源管理</option>
+    <option value="0466">历史学（强基计划）</option>
+    <option value="0467">历史学（拔尖班）</option>
+    <option value="0469">文物与博物馆学</option>
+    <option value="0471">社会学</option>
+    <option value="0503">外国语言文学类</option>
+    <option value="0505">外国语言文学类（小语种）</option>
+    <option value="0511">英语</option>
+    <option value="0512">英语（留学生）</option>
+    <option value="0513">英语（英汉口译方向）</option>
+    <option value="0514">英语（人文类）</option>
+    <option value="0515">翻译</option>
+    <option value="0516">涉外法治（英语-法学）</option>
+    <option value="0517">语言数据科学</option>
+    <option value="0522">国际组织与国际发展</option>
+    <option value="0531">德语</option>
+    <option value="0532">日语</option>
+    <option value="0533">法语</option>
+    <option value="0534">俄语</option>
+    <option value="0535">德语-光电信息科学与工程</option>
+    <option value="0536">法语-电子科学与技术</option>
+    <option value="0551">X+外语</option>
+    <option value="0561">西班牙语</option>
+    <option value="0601">理科试验班类</option>
+    <option value="0602">理科试验班类（理科创新之星）</option>
+    <option value="0611">数学与应用数学</option>
+    <option value="0612">信息与计算科学</option>
+    <option value="0613">统计学</option>
+    <option value="0614">数学与应用数学（基地班）</option>
+    <option value="0616">数学与应用数学（英才班）</option>
+    <option value="0617">数学与应用数学（理科创新之星）</option>
+    <option value="0618">统计学（理科创新之星）</option>
+    <option value="0621">物理学</option>
+    <option value="0622">物理学（理科创新之星）</option>
+    <option value="0631">化学</option>
+    <option value="0632">应用化学</option>
+    <option value="0633">化学（理科创新之星）</option>
+    <option value="0641">地质学</option>
+    <option value="0642">资源环境与城乡规划管理</option>
+    <option value="0643">大气科学</option>
+    <option value="0644">地理信息系统</option>
+    <option value="0645">地球信息科学与技术</option>
+    <option value="0646">资源环境与城乡规划管理（新疆班）</option>
+    <option value="0647">人文地理与城乡规划</option>
+    <option value="0648">地理信息科学</option>
+    <option value="0651">心理学</option>
+    <option value="0652">应用心理学</option>
+    <option value="0701">生物科学类</option>
+    <option value="0702">理科试验班类（生命与环境）</option>
+    <option value="0703">理科试验班类（生命、环境与地学）</option>
+    <option value="0704">理科试验班类（生命科学卓越之星）</option>
+    <option value="0705">理科试验班类（生命、环境、化学与地学）</option>
+    <option value="0712">生物信息学</option>
+    <option value="0713">生物科学</option>
+    <option value="0714">生物科学（生命科学卓越之星）</option>
+    <option value="0715">生物科学（强基计划）</option>
+    <option value="0721">生物技术</option>
+    <option value="0722">生物技术</option>
+    <option value="0723">生物技术（生命科学卓越之星）</option>
+    <option value="0724">生态学</option>
+    <option value="0725">生态学（生命科学卓越之星）</option>
+    <option value="0726">生态学（强基计划）</option>
+    <option value="0727">生态学（第二学士学位）</option>
+    <option value="0801">机械类</option>
+    <option value="0802">工科试验班（工学）</option>
+    <option value="0803">工科试验班（机械与材料）</option>
+    <option value="0811">机械工程及其自动化</option>
+    <option value="0815">工业工程</option>
+    <option value="0816">机械电子工程</option>
+    <option value="0817">机械工程</option>
+    <option value="0818">机械工程（国际学生）</option>
+    <option value="0819">智能制造卓越培养项目</option>
+    <option value="0821">机械设计制造及其自动化</option>
+    <option value="0823">能源与环境系统工程</option>
+    <option value="0826">机械设计制造及其自动化（汽车工程）</option>
+    <option value="0828">能源与环境系统工程（卓越）</option>
+    <option value="0829">机械设计制造及其自动化（卓越）</option>
+    <option value="0831">工程力学</option>
+    <option value="0901">材料科学与工程类</option>
+    <option value="0902">化工与制药类</option>
+    <option value="0903">工科试验班（能源、化工与高分子）</option>
+    <option value="0904">工科试验班（材料、化工与高分子）</option>
+    <option value="0911">过程装备与控制工程</option>
+    <option value="0912">化学工程与工艺</option>
+    <option value="0913">制药工程</option>
+    <option value="0914">生物工程</option>
+    <option value="0915">化学工程与工艺（中加班）</option>
+    <option value="0916">智慧化工卓越培养项目</option>
+    <option value="0917">生物工程（强基计划）</option>
+    <option value="0921">材料科学与工程</option>
+    <option value="0932">高分子材料与工程</option>
+    <option value="1001">电气工程与自动化类</option>
+    <option value="1002">工科试验班（电气与自动化）</option>
+    <option value="1003">工科试验班（电气工程卓越人才）</option>
+    <option value="1011">电气工程及其自动化</option>
+    <option value="1013">电气工程及其自动化（卓越）</option>
+    <option value="1014">电气工程及其自动化（电气工程卓越人才）</option>
+    <option value="1015">电气工程及其自动化（卓越人才培养班）</option>
+    <option value="1016">电气工程及其自动化（爱迪生班）</option>
+    <option value="1021">自动化（电气学院）</option>
+    <option value="1022">系统科学与工程</option>
+    <option value="1024">自动化（电气学院）（卓越）</option>
+    <option value="1025">自动化（电气）（电气工程卓越人才）</option>
+    <option value="1031">电子信息工程（电气学院）</option>
+    <option value="1033">电子信息工程（电气学院）（卓越）</option>
+    <option value="1034">电子信息工程（电气工程卓越人才）</option>
+    <option value="1035">电子信息工程（卓越人才培养班）</option>
+    <option value="1036">电子信息工程（爱迪生班）</option>
+    <option value="1100">信息工程</option>
+    <option value="1101">工科实验基地</option>
+    <option value="1102">工科试验班</option>
+    <option value="1103">工科试验班（信息）</option>
+    <option value="1104">信息工程（卓越）</option>
+    <option value="1105">工科试验班（EE类）</option>
+    <option value="1106">工科试验班（智能制造与机器人创新班）</option>
+    <option value="1107">工科试验班（智能光电芯片及系统创新班）</option>
+    <option value="1108">信息工程（香农班）</option>
+    <option value="1111">自动化（控制系）</option>
+    <option value="1113">自动化（控制）（卓越）</option>
+    <option value="1114">具身智能</option>
+    <option value="1121">信息工程（光电系）</option>
+    <option value="1130">电子科学与技术（香农班）</option>
+    <option value="1133">电子科学与技术</option>
+    <option value="1135">电子科学与技术（信息电子技术）</option>
+    <option value="1138">信息与通信工程</option>
+    <option value="1139">电子科学与技术（微电子与光电子）</option>
+    <option value="1140">信息与通信工程（信息工程）</option>
+    <option value="1141">信息与通信工程（通信工程）</option>
+    <option value="1142">信息与通信工程（电子信息工程）</option>
+    <option value="1143">电子科学与技术（卓越）</option>
+    <option value="1144">信息与通信工程（卓越）</option>
+    <option value="1151">信息工程（光电系统及工程）</option>
+    <option value="1152">信息工程（光通信及集成光电子技术）</option>
+    <option value="1153">信息工程（光电）中澳班</option>
+    <option value="1201">土木工程类</option>
+    <option value="1202">科技与创意设计试验班</option>
+    <option value="1203">工科试验班（建筑与土木）</option>
+    <option value="1204">工科试验班（智慧城市与建筑工程）</option>
+    <option value="1211">土木工程</option>
+    <option value="1213">土木工程（卓越）</option>
+    <option value="1214">土木工程（卓越人才培养班）</option>
+    <option value="1221">建筑学</option>
+    <option value="1222">建筑学（国际学生）</option>
+    <option value="1223">建筑学（四年制）</option>
+    <option value="1231">城市规划</option>
+    <option value="1232">城乡规划</option>
+    <option value="1233">城乡规划（四年制）</option>
+    <option value="1242">港口航道与海岸工程</option>
+    <option value="1243">水资源与海洋工程</option>
+    <option value="1244">水利水电工程</option>
+    <option value="1251">交通工程</option>
+    <option value="1252">土木、水利与交通工程</option>
+    <option value="1253">土木、水利与交通工程（卓越人才培养班）</option>
+    <option value="1254">智慧城市与建筑工程卓越培养项目</option>
+    <option value="1301">应用生物科学类（生工食品）</option>
+    <option value="1302">应用生物科学（生工食品）</option>
+    <option value="1315">生物系统工程</option>
+    <option value="1319">生物工程（生物系统工程方向）</option>
+    <option value="1321">食品科学与工程</option>
+    <option value="1322">食品科学与工程（食品安全与营养）</option>
+    <option value="1323">农业工程</option>
+    <option value="1324">农业工程（第二学士学位）</option>
+    <option value="1325">食品科学与工程（国际学生）</option>
+    <option value="1326">智慧农业工程卓越培养项目</option>
+    <option value="1328">食品科学与工程（民族班）</option>
+    <option value="1329">食品科学与工程（第二学士学位）</option>
+    <option value="1401">环境科学与工程类</option>
+    <option value="1411">环境科学</option>
+    <option value="1421">环境工程</option>
+    <option value="1432">农业资源与环境</option>
+    <option value="1433">资源环境科学</option>
+    <option value="1511">生物医学工程</option>
+    <option value="1512">生物医学工程（第二学士学位）</option>
+    <option value="1513">智能诊疗技术</option>
+    <option value="1522">电子信息技术及仪器</option>
+    <option value="1523">测控技术与仪器</option>
+    <option value="1601">应用生物科学类</option>
+    <option value="1602">应用生物科学类（农学）</option>
+    <option value="1603">应用生物科学（农学）</option>
+    <option value="1611">农学</option>
+    <option value="1612">应用生物科学(理学学位)</option>
+    <option value="1613">应用生物科学</option>
+    <option value="1614">应用生物科学(农学学位)</option>
+    <option value="1620">生物育种科学（强基计划）</option>
+    <option value="1622">园林</option>
+    <option value="1623">园艺</option>
+    <option value="1631">植物保护</option>
+    <option value="1641">茶学</option>
+    <option value="1701">动物科学类</option>
+    <option value="1721">动物科学</option>
+    <option value="1722">动物科学（动物科技方向）</option>
+    <option value="1723">动物科学（特种经济动物科学方向）</option>
+    <option value="1731">动物医学</option>
+    <option value="1732">动物医学（五年制）</option>
+    <option value="1741">生物资源科学</option>
+    <option value="1801">临床医学（七年制）</option>
+    <option value="1802">医学试验班类</option>
+    <option value="1803">医学试验班类（医药）</option>
+    <option value="1804">医学试验班类（口腔）</option>
+    <option value="1805">临床医学</option>
+    <option value="1806">医学试验班类（预防医学）</option>
+    <option value="1807">医学试验班类（“5+3”一体化培养）</option>
+    <option value="1808">临床医学（5+3）</option>
+    <option value="1809">医学试验班</option>
+    <option value="1810">临床医学（儿科方向）（5+3）</option>
+    <option value="1811">临床医学（七年制）一系</option>
+    <option value="1812">临床医学（五年制）一系</option>
+    <option value="1813">临床医学（留学生）一系</option>
+    <option value="1821">临床医学（七年制）二系</option>
+    <option value="1822">临床医学（五年制）二系</option>
+    <option value="1823">临床医学（留学生）二系</option>
+    <option value="1831">临床医学（七年制）三系</option>
+    <option value="1832">临床医学（五年制）三系</option>
+    <option value="1835">临床医学（留学生）三系</option>
+    <option value="1841">口腔医学</option>
+    <option value="1842">口腔医学（5+3）</option>
+    <option value="1851">基础医学</option>
+    <option value="1852">基础医学(基地班)</option>
+    <option value="1853">临床医学（留学生）</option>
+    <option value="1854">基础医学（生物医学）</option>
+    <option value="1855">生物医学</option>
+    <option value="1856">生物医学（八年制特选）</option>
+    <option value="1857">基础医学（强基计划）</option>
+    <option value="1858">临床医学（国际学生）</option>
+    <option value="1861">预防医学</option>
+    <option value="1863">预防医学（民族班）</option>
+    <option value="1871">护理学</option>
+    <option value="1901">药学</option>
+    <option value="1902">药物制剂</option>
+    <option value="1903">中药学</option>
+    <option value="1904">药学类</option>
+    <option value="1905">药学（拔尖班）</option>
+    <option value="2001">工商管理类</option>
+    <option value="2002">社会科学试验班</option>
+    <option value="2003">社会科学试验班（数字法治卓越班）</option>
+    <option value="2004">社会科学试验班（智能财务荣誉项目班）</option>
+    <option value="2005">社会科学试验班（数字公共治理荣誉项目班）</option>
+    <option value="2011">农林经济管理</option>
+    <option value="2021">旅游管理</option>
+    <option value="2022">旅游管理（西藏班）</option>
+    <option value="2023">工商管理（国际学生）</option>
+    <option value="2030">会计学（智能财务班）</option>
+    <option value="2031">工商管理</option>
+    <option value="2032">市场营销</option>
+    <option value="2033">会计学</option>
+    <option value="2034">财务管理</option>
+    <option value="2035">物流管理</option>
+    <option value="2037">人力资源管理</option>
+    <option value="2041">信息管理与信息系统</option>
+    <option value="2042">电子商务（管理）</option>
+    <option value="2043">商务大数据分析（信息管理与信息系统-统计学）</option>
+    <option value="2044">数智决策与管理</option>
+    <option value="2045">科技创新与创业管理</option>
+    <option value="2046">数据科学与大数据技术</option>
+    <option value="2051">现代农村管理（村官）</option>
+    <option value="2101">数字媒体技术类</option>
+    <option value="2111">工业设计</option>
+    <option value="2112">计算机科学与技术</option>
+    <option value="2113">计算机科学与技术（中加）</option>
+    <option value="2114">计算机科学与技术（中加班）中方生</option>
+    <option value="2115">计算机科学与技术（中加班）留学生</option>
+    <option value="2116">信息安全</option>
+    <option value="2117">人工智能</option>
+    <option value="2118">计算机科学与技术（国际学生）</option>
+    <option value="2121">数字媒体技术</option>
+    <option value="2131">艺术设计（工业设计）</option>
+    <option value="2132">产品设计</option>
+    <option value="2133">AI + X</option>
+    <option value="2134">智能艺术与设计</option>
+    <option value="2211">软件工程</option>
+    <option value="2213">软件工程（二学位）</option>
+    <option value="2214">软件工程（国际学生）</option>
+    <option value="2311">汉语言（留学生）</option>
+    <option value="2312">汉语言（国际学生）</option>
+    <option value="2401">行政管理</option>
+    <option value="2402">行政管理(体育)</option>
+    <option value="2404">劳动与社会保障</option>
+    <option value="2405">土地资源管理</option>
+    <option value="2406">公共管理类</option>
+    <option value="2407">行政管理（数字公共治理班）</option>
+    <option value="2501">汉语国际教育</option>
+    <option value="2502">广播电视学</option>
+    <option value="2503">传播学</option>
+    <option value="2504">传播学（国际学生）</option>
+    <option value="2505">传播学（智能与国际传播创新班）</option>
+    <option value="2511">人文科学试验班（传媒）</option>
+    <option value="2512">新闻传播学类</option>
+    <option value="2601">飞行器设计与工程</option>
+    <option value="2602">飞行器设计与工程（卓越人才培养班）</option>
+    <option value="2603">工程力学（卓越人才培养班）</option>
+    <option value="2604">工程力学（强基计划）</option>
+    <option value="2605">工程力学（拔尖班）</option>
+    <option value="2611">工科试验班（航空航天与过程装备）</option>
+    <option value="2922">数智组织</option>
+    <option value="3001">工科试验班（竺可桢学院交叉创新平台）</option>
+    <option value="3002">混合班</option>
+    <option value="3003">人文社科实验班</option>
+    <option value="3004">医学实验班（临床医学八年制）</option>
+    <option value="3005">应用生物科学（农学试验班）</option>
+    <option value="3006">社会科学试验班（公共管理英才班）</option>
+    <option value="3007">工科试验班（竺可桢学院图灵班）</option>
+    <option value="3008">社会科学试验班（竺可桢学院人文社科实验班、智能财务班）</option>
+    <option value="3010">新农科实验班（本博贯通）</option>
+    <option value="3021">混合班</option>
+    <option value="3022">文科班</option>
+    <option value="3025">工高班</option>
+    <option value="3026">创新与创业管理强化班</option>
+    <option value="3027">计算机学院_竺院共建班</option>
+    <option value="3028">公共管理强化班</option>
+    <option value="3029">文科平台</option>
+    <option value="3030">理科平台</option>
+    <option value="3031">工科平台</option>
+    <option value="3032">英语双学位班</option>
+    <option value="3033">理工平台</option>
+    <option value="3035">启真班</option>
+    <option value="3040">计算机科学与技术（图灵班）</option>
+    <option value="3041">信息安全（图灵班）</option>
+    <option value="3042">人工智能（图灵班）</option>
+    <option value="3051">外语+X平台(文)</option>
+    <option value="3052">外语+X平台(理)</option>
+    <option value="3053">外语+X平台(工)</option>
+    <option value="3054">外语+X平台(理工)</option>
+    <option value="3055">心理学（求是科学班）</option>
+    <option value="3056">基础医学（求是科学班）</option>
+    <option value="3057">地质学（求是科学班）</option>
+    <option value="3058">汉语言文学（求是科学班）</option>
+    <option value="3059">数字地球系统科学（求是科学班）</option>
+    <option value="3060">文化中国人才计划</option>
+    <option value="3061">设计创新班</option>
+    <option value="3062">神农班</option>
+    <option value="3063">求是科学班</option>
+    <option value="3064">人文社科实验班</option>
+    <option value="3065">求是科学班（数学）</option>
+    <option value="3066">求是科学班（物理）</option>
+    <option value="3067">求是科学班（化学）</option>
+    <option value="3068">求是科学班（生物）</option>
+    <option value="3069">求是科学班（计算机）</option>
+    <option value="3070">医学实验班（临床医学八年制）</option>
+    <option value="3071">求是科学班（生物医学）</option>
+    <option value="3072">求是科学班（食品安全与营养）</option>
+    <option value="3073">数学与应用数学（求是科学班）</option>
+    <option value="3074">物理学（求是科学班）</option>
+    <option value="3075">化学（求是科学班）</option>
+    <option value="3076">生物科学（求是科学班）</option>
+    <option value="3077">计算机科学与技术（求是科学班）</option>
+    <option value="3078">金融学（数学与应用数学交叉创新平台）</option>
+    <option value="3079">数学与应用数学（金融学交叉创新平台）</option>
+    <option value="3080">信息管理与信息系统（统计学交叉创新平台）</option>
+    <option value="3081">统计学（信息管理与信息系统交叉创新平台）</option>
+    <option value="3082">自动化（机械电子工程交叉创新平台）</option>
+    <option value="3083">机械电子工程（自动化交叉创新平台）</option>
+    <option value="3084">计算机科学与技术（自动化交叉创新平台）</option>
+    <option value="3085">自动化（计算机科学与技术交叉创新平台）</option>
+    <option value="3086">计算机科学与技术（统计学交叉创新平台）</option>
+    <option value="3087">统计学（计算机科学与技术交叉创新平台）</option>
+    <option value="3088">金融学（竺可桢学院数字金融班）</option>
+    <option value="3091">能源与环境系统工程（智慧能源班）</option>
+    <option value="3092">机器人工程（竺可桢学院）</option>
+    <option value="3093">会计学（竺可桢学院智能财务班）</option>
+    <option value="4101">中医学七年制</option>
+    <option value="4301">眼视光学</option>
+    <option value="5501">马克思主义理论</option>
+    <option value="5601">设计学类</option>
+    <option value="5602">文物与博物馆学（第二学士学位）</option>
+    <option value="5801">机械工程（卓越人才培养班）</option>
+    <option value="5802">机械工程（智能制造与机器人创新班）</option>
+    <option value="5901">车辆工程</option>
+    <option value="5902">能源与环境系统工程（卓越人才培养班）</option>
+    <option value="5903">过程装备与控制工程（卓越人才培养班）</option>
+    <option value="6101">工科试验班（机械与能源）</option>
+    <option value="6202">基础交叉班</option>
+    <option value="6211">新能源科学与工程</option>
+    <option value="6401">工科试验班（材料与化工）</option>
+    <option value="6501">高分子材料与工程（卓越人才培养班）</option>
+    <option value="6601">光电信息科学与工程</option>
+    <option value="6701">信息与通信工程（国家集成电路）</option>
+    <option value="6702">电子科学与技术（国家集成电路）</option>
+    <option value="6901">工科试验班（海洋）</option>
+    <option value="6911">海洋工程与技术</option>
+    <option value="6912">水资源与海洋工程（港口航道与海岸工程）</option>
+    <option value="6913">海洋科学</option>
+    <option value="6914">船舶与海洋工程</option>
+    <option value="6915">智慧海洋卓越培养项目（海洋工程与技术）</option>
+    <option value="6916">智慧海洋卓越培养项目（海洋科学）</option>
+    <option value="7401">海洋贸易与港航物流</option>
+    <option value="7601">物理学（强基计划）</option>
+    <option value="7602">物理学-量子科技方向（强基计划）</option>
+    <option value="7701">化学（强基计划）</option>
+    <option value="8001">材料科学与工程（卓越人才培养班）</option>
+    <option value="8101">资源循环科学与工程</option>
+    <option value="8102">化学工程与工艺（卓越人才培养班）</option>
+    <option value="8201">数学与应用数学（强基计划）</option>
+    <option value="8202">数学与应用数学-智能科学方向（强基计划）</option>
+    <option value="8301">地理信息科学（第二学士学位）</option>
+    <option value="8401">光电信息科学与工程（第二学士学位）</option>
+    <option value="8402">光学成像与智能感知</option>
+    <option value="8403">光电信息科学与工程（智能光电芯片及系统创新班）</option>
+    <option value="8511">微电子科学与工程</option>
+    <option value="8512">智慧物联网</option>
+    <option value="8601">自动化（控制）</option>
+    <option value="8602">机器人工程</option>
+
+
+</select>
+
+
+		   		  <SCRIPT type="text/javascript">
+		    	  		jQuery('#zydm_cx').trigger("chosen");
+		    	  	</SCRIPT>
+		      </div>
+		    </div>
+		  </div>		  
+		  <div class="col-md-3 col-sm-6" style="display:none;">
+		    <div class="form-group">
+		      <label for="" class="col-sm-4 control-label">大类标识</label>
+		      <div class="col-sm-8">
+		   		  	<select name="dlbs_cx" id="dlbs_cx" class="form-control chosen-select">
+    <option value=""
+    >全部</option>
+    <option value="dl">大类</option>
+    <option value="zy">专业</option>
+    <option value="fx">辅修</option>
+
+
+</select>
+
+
+		   		  	<SCRIPT type="text/javascript">
+		    	  		jQuery('#dlbs_cx').trigger("chosen");
+		    	  	</SCRIPT>
+		      </div>
+		    </div>
+		  </div> 
+		   <div class="col-md-3 col-sm-6">
+		    <div class="form-group">
+		      <label for="" class="col-sm-4 control-label">教学计划号</label>
+		      <div class="col-sm-8">
+		   		 <input type="text" name="jxjhh_cx" value="" id="jxjhh_cx" class="form-control" placeholder="按教学计划号模糊查询"/>
+		      </div>
+		    </div>
+		  </div>
+	  </div>
+</form>
+
+
+
+<div class="row sl_aff_btn">
+   <div class="col-sm-12" id="searchBox">
+     <button type="button" class="btn btn-primary btn-sm" id="search_go">查询</button>
+   </div>
+</div>
+<table id="tabGrid"></table>
+<div id="pager"></div>
+
+				
+
+
+<!--jQuery.jqGrid -->
+<link rel="stylesheet" type="text/css" href="/zftal-ui-v5-1.0.2-zjdx/assets/plugins/jqGrid/css/jquery.jqgrid.css?ver=29252209" />
+<script type="text/javascript" src="/zftal-ui-v5-1.0.2-zjdx/assets/plugins/jqGrid/jquery.jqgrid.src-min.js?ver=29252209" charset="utf-8"></script>
+<script type="text/javascript" src="/zftal-ui-v5-1.0.2-zjdx/assets/plugins/jqGrid/jquery.jqgrid.contact-min.js?ver=29252209" charset="utf-8"></script>
+<script type="text/javascript" src="/zftal-ui-v5-1.0.2-zjdx/assets/plugins/jqGrid/lang/zh_CN.js?ver=29252209" charset="utf-8"></script>
+<script type="text/javascript" src="/jwglxt/js/plugins/jqGrid4.6/jquery.jqgrid.settings.js?ver=29252209" charset="utf-8"></script>
+<script type="text/javascript" src="/jwglxt/js/plugins/jqGrid4.6/jquery.jqGrid-min.js?ver=29252209" charset="utf-8"></script>
+
+<!--jQuery.validation -->
+<link rel="stylesheet" type="text/css" href="/zftal-ui-v5-1.0.2-zjdx/assets/plugins/validation/css/jquery.validate-min.css?ver=29252209" />
+<script type="text/javascript" src="/zftal-ui-v5-1.0.2-zjdx/assets/plugins/validation/js/jquery.validate-min.js?ver=29252209" charset="utf-8"></script>
+<script type="text/javascript" src="/zftal-ui-v5-1.0.2-zjdx/assets/plugins/validation/js/jquery.validate.contact-min.js?ver=29252209" charset="utf-8"></script>
+<script type="text/javascript" src="/zftal-ui-v5-1.0.2-zjdx/assets/plugins/validation/js/jquery.validate.methods.contact-min.js?ver=29252209" charset="utf-8"></script>
+<script type="text/javascript" src="/zftal-ui-v5-1.0.2-zjdx/assets/plugins/validation/lang/zh_CN-min.js?ver=29252209" charset="utf-8"></script>
+<script type="text/javascript">
+	jQuery(function($){
+		$('[data-toggle*="validation"]').trigger("validation");
+	});
+</script>
+
+<script type="text/javascript" src="/jwglxt/js/jquery.zftal.contact.zjdx.js?ver=29252209"></script>
+<script type="text/javascript" src="/jwglxt/js/comp/jwglxt/jxjhgl/pyfagl/pyfaxscx.js?ver=29252209"></script>
+
+			</div>
+		</div>
+	</div>
+	<!-- footer -->
+	
+
+<!-- footer --> 
+<div id="footerID" class="footer">
+	<p>版权所有&copy; Copyright 1999-2020  正方软件股份有限公司　　中国·杭州西湖区紫霞街176号 互联网创新创业园2号301</p>
+</div>
+<script type="text/javascript">
+	//系统中页面底部的时间随系统时间来定
+	var date=new Date;
+	var year=date.getFullYear();
+	var s = $("#footerID").text().indexOf('-'); 
+	var textNr =$("#footerID").text().substr(0,s+1)+year+$("#footerID").text().substr(s+5);
+	$("#footerID").text("");
+	$("#footerID").text(textNr);
+</script>
+<!-- footer-end -->
+	<!-- footer-end -->
+</body>
+<script type="text/javascript">
+	jQuery(function($) {
+		//解决页签模式下，加载jquery.jqGrid.additional.js和jquery.jqgrid.src.js文件时searchGrid方法被覆盖，导致无法查询问题
+		var waitAndResetSearchFunc = function() {
+			var iWaitCount = 1, $yhgnPage = $("#yhgnPage");
+			setTimeout(function() {
+				if (iWaitCount < 50 &&
+						$yhgnPage.find("#loading_status").defined()) {
+					iWaitCount++;
+					setTimeout(arguments.callee, 200);
+				} else {
+					window.search = function(tabId, jsonMap) {
+						var $tabGrid = $("#" + tabId);
+						if(jsonMap){
+							$tabGrid.jqGrid('setGridParam',{
+								datatype: 'json',
+								postData : jsonMap ||{},
+								page	  : 1
+							}).trigger('reloadGrid');
+						}else{
+							$tabGrid.jqGrid().trigger('reloadGrid');
+						}
+					}
+				}
+			}, 500);
+		};
+
+		if ($("#navbar-tabs").length > 0) {
+			$("#navbar-tabs li a").removeAttr("onClick").click(function(e) {
+				$(".ui-jqdialog:not(:visible)").remove(); //删除隐藏的ui-jqdialog
+				var $curTab = $(e.target), $preTab = $("#navbar-tabs").find("li.active a");
+				if (!$preTab.defined() || ($preTab[0] != $curTab[0])) {
+					var paramData = {},
+						arrParams = $.founded($curTab.data("params")) ? $curTab.data("params").split(",") : [];
+					for (var i = 0, iLen = arrParams.length; i < iLen; i++) {
+						if ($.founded(arrParams[i])) {
+							paramData[arrParams[i]] = $curTab.data(arrParams[i]);
+						}
+					}
+					$("#navbar-tabs").find("li").removeClass("active");
+					onClickMenu.call($curTab[0], $curTab.data("dyym"), $curTab.data("gnmkdm"), paramData);
+					waitAndResetSearchFunc();
+					/*
+					if ($("#gnmkdmKey").val().indexOf("N153005") == -1) {
+						var title = $curTab.text().trim();
+						$("#navbar_container").find("span.sr-only, a.navbar-brand").text(title);	
+					}
+					*/
+				}
+			});
+			$firstTab = $("#navbar-tabs li:eq(0) a").tab('show');
+			$.founded($firstTab.data("gnmkdm")) && $("#gnmkdmKey").val($firstTab.data("gnmkdm"));
+		}
+		
+		setMinheight();
+		
+		$('#yhgnPage').resize(function(){
+			var minHeight  = $(this).data('min-height');
+			var innerHeight =  $('#innerContainer').outerHeight(true);
+			//console.log("minHeight:" + minHeight + ",innerHeight:" + innerHeight);
+			$(this).css('min-height', Math.max(minHeight, innerHeight));
+		});
+		
+		function setMinheight(){
+			//计算grid页面高度
+			var docuemntHeight = $(document).height(),
+				topHeight = $('header').outerHeight(),
+				footerHeight = $('.footer').outerHeight(),
+				tabHeight = $("#navbar-tabs").defined() ? $("#navbar-tabs").parent().outerHeight() : 0,
+				containerHeight = docuemntHeight - topHeight - footerHeight - tabHeight -60;
+			$('#yhgnPage').css('min-height',containerHeight).data('min-height',containerHeight);
+		}
+	});
+</script>
+
+</html>
