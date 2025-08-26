@@ -105,7 +105,7 @@ def login(
     if not verify_passwd(data.passwd, user.passwd.encode("utf-8")):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="密码错误")
 
-    admin = db.query(Admin).filter_by(uid=data.uid).first()
+    admin = db.query(Admin).filter_by(aid=data.uid).first()
 
     if not admin:
         raise HTTPException(

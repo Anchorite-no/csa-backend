@@ -4,6 +4,8 @@ from datetime import timedelta
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
+from jose.exceptions import ExpiredSignatureError, JWTClaimsError
+
 import bcrypt
 
 from config import get_secret_key, get_secret_key_admin
@@ -49,8 +51,10 @@ def create_access_token_admin(
     to_encode.update({"aid": aid})
     to_encode.update({"exp": expire})
 
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY_ADMIN, algorithm=ALGORITHM)
+    print(to_encode)
 
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY_ADMIN, algorithm=ALGORITHM)
+    print(encoded_jwt)
     return encoded_jwt
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
@@ -110,11 +114,14 @@ async def login_required(token: str = Depends(oauth2_scheme)):
     return True
 
 async def login_required_admin(token: str = Depends(oauth2_scheme)):
+    
+    # return True
+
     try:
         jwt.decode(token, SECRET_KEY_ADMIN, algorithms=ALGORITHM)
 
     except JWTError:
-        raise credentials_exception_admin
+        raise credentials_exception
 
     return True
 

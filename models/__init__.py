@@ -22,12 +22,3 @@ def get_db():
     finally:
         db.close()
 
-# 导入所有模型以确保它们被注册
-from .user import User
-from .admin import Admin
-from .role import Admin_Role, User_Role
-from .event import Event
-from .news import News
-from .interview import Interview, InterviewTimeSlot
-from .recruit import Recruitment, Evaluation
-from .member import Member

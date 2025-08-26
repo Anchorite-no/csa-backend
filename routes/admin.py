@@ -55,7 +55,7 @@ class UserDelete(BaseModel):
 
 
 def is_manager(db: Session, aid: str) -> bool:
-    admin = db.query(Admin).filter_by(aid=int(aid)).first()
+    admin = db.query(Admin).filter_by(aid=aid).first()
     if admin and admin.role_id and admin.role_id == 7:
         return True
     return False
