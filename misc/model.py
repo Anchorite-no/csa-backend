@@ -21,7 +21,7 @@ def aid_to_nick(db, aid: str):
     from models.admin import Admin
     from models.user import User
 
-    admin = db.query(Admin).filter_by(aid=aid).first()
+    admin = db.query(Admin).filter_by(aid=int(aid)).first()
     if not admin:
         return None
     

@@ -18,6 +18,9 @@ def init_app_routes(app: FastAPI):
     from routes.admin import router as admin_router
     from routes.register import router as register_router
     from routes.recruit import router as recruit_router
+    from routes.dingtalk import router as dingtalk_router
+    from routes.interview import router as interview_router
+    from routes.member import router as member_router
 
     app.include_router(
         news_router,
@@ -69,6 +72,27 @@ def init_app_routes(app: FastAPI):
         admin_router,
         prefix="/api/admin",
         tags=["admin"],
+        dependencies=[Depends(login_required_admin)],
+    )
+    
+    app.include_router(
+        dingtalk_router,
+        prefix="/api/dingtalk",
+        tags=["dingtalk"],
+        dependencies=[Depends(login_required_admin)],
+    )
+    
+    app.include_router(
+        interview_router,
+        prefix="/api/interview",
+        tags=["interview"],
+        dependencies=[Depends(login_required_admin)],
+    )
+    
+    app.include_router(
+        member_router,
+        prefix="/api/member",
+        tags=["member"],
         dependencies=[Depends(login_required_admin)],
     )
 

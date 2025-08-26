@@ -167,3 +167,5 @@ venv
 test/test.db
 test/.pytest_cache
 test/data.sqlite
+
+uploads/resumes/*

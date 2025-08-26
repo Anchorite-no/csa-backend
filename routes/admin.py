@@ -2,6 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, constr, EmailStr, Field
 from typing import Annotated, Optional
 from sqlalchemy.orm import Session
+from datetime import datetime
+import pandas as pd
+from io import BytesIO
+from fastapi.responses import StreamingResponse
 
 from misc.auth import (
     get_current_admin,
@@ -15,7 +19,7 @@ from models.role import Admin_Role, User_Role
 from models.relation.user_event import user_event
 from models.relation.user_roles import user_role_association
 from models.relation.admin_roles import admin_role_association
-
+from models.recruit import Recruitment, Evaluation
 
 router = APIRouter()
 
@@ -51,7 +55,7 @@ class UserDelete(BaseModel):
 
 
 def is_manager(db: Session, aid: str) -> bool:
-    admin = db.query(Admin).filter_by(aid=aid).first()
+    admin = db.query(Admin).filter_by(aid=int(aid)).first()
     if admin and admin.role_id and admin.role_id == 7:
         return True
     return False
@@ -228,3 +232,5 @@ def update_user_role(
         raise HTTPException(status_code=400, detail=f"更改用户角色时发生错误: {e}")
 
     return {"msg": "用户角色已成功更改"}
+
+
