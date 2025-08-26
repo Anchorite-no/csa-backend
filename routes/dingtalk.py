@@ -33,7 +33,9 @@ class DingTalkSingleMessageRequest(BaseModel):
 
 
 @router.get("/config")
-def get_config(current_admin: int = Depends(get_current_admin)):
+def get_config(
+    # current_admin: int = Depends(get_current_admin)
+):
     """获取钉钉配置"""
     config = get_dingtalk_config()
     return {
@@ -46,7 +48,9 @@ def get_config(current_admin: int = Depends(get_current_admin)):
 
 
 @router.put("/config")
-def update_config(config_data: DingTalkConfigRequest, current_admin: int = Depends(get_current_admin)):
+def update_config(config_data: DingTalkConfigRequest,
+    # current_admin: int = Depends(get_current_admin)
+):
     """更新钉钉配置"""
     try:
         update_dingtalk_config(
@@ -64,7 +68,9 @@ def update_config(config_data: DingTalkConfigRequest, current_admin: int = Depen
 
 
 @router.post("/send_message")
-def send_message(message_data: DingTalkMessageRequest, current_admin: int = Depends(get_current_admin)):
+def send_message(message_data: DingTalkMessageRequest,
+    # current_admin: int = Depends(get_current_admin)
+):
     """发送钉钉消息给多个用户"""
     try:
         success = send_dingtalk_message(
@@ -87,7 +93,9 @@ def send_message(message_data: DingTalkMessageRequest, current_admin: int = Depe
 
 
 @router.post("/send_single_message")
-def send_single_message(message_data: DingTalkSingleMessageRequest, current_admin: int = Depends(get_current_admin)):
+def send_single_message(message_data: DingTalkSingleMessageRequest,
+    # current_admin: int = Depends(get_current_admin)
+):
     """发送钉钉消息给单个用户"""
     try:
         success = send_dingtalk_message_to_user(
@@ -110,7 +118,9 @@ def send_single_message(message_data: DingTalkSingleMessageRequest, current_admi
 
 
 @router.post("/test_connection")
-def test_connection(current_admin: int = Depends(get_current_admin)):
+def test_connection(
+    # current_admin: int = Depends(get_current_admin)
+):
     """测试钉钉连接"""
     try:
         config = get_dingtalk_config()

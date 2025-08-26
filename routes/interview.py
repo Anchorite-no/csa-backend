@@ -535,13 +535,13 @@ class AutoScheduleResponse(BaseModel):
 def create_interview_schedule(
     schedule_data: InterviewSchedule,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
     """创建面试排班"""
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     # 检查纳新记录是否存在
     recruit = db.query(Recruitment).filter(Recruitment.uid == schedule_data.uid).first()
@@ -577,13 +577,13 @@ def create_interview_schedule(
 def auto_schedule_interviews(
     request: AutoScheduleRequest,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
     """一键自动排班"""
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     try:
         # 1. 获取所有有面试时间段的纳新记录
@@ -746,13 +746,13 @@ def auto_schedule_interviews(
 @router.get("/schedule-statistics", tags=["interview"])
 def get_schedule_statistics(
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
     """获取排班统计信息"""
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     try:
         # 获取所有纳新记录
@@ -822,13 +822,13 @@ def get_schedule_statistics(
 def get_interviews_by_uid(
     uid: str,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
-    """获取指定用户的面试记录"""
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # """获取指定用户的面试记录"""
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     interviews = db.query(Interview).filter(
         Interview.uid == uid
@@ -848,13 +848,13 @@ def get_interview_schedules(
     stage: Optional[str] = None,
     status: Optional[str] = None,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
     """获取面试排班列表"""
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     query = db.query(Interview)
     
@@ -904,13 +904,13 @@ def update_interview_schedule(
     schedule_id: int,
     schedule_data: InterviewScheduleUpdate,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
     """更新面试排班"""
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     schedule = db.query(Interview).filter(Interview.id == schedule_id).first()
     if not schedule:
@@ -943,13 +943,13 @@ def update_interview_schedule(
 def delete_interview_schedule(
     schedule_id: int,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
     """删除面试排班"""
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     schedule = db.query(Interview).filter(Interview.id == schedule_id).first()
     if not schedule:
@@ -975,13 +975,13 @@ def delete_interview_schedule(
 def get_recruit_time_slots(
     uid: str,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
     """获取纳新者的面试时间段信息"""
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     try:
         recruit = db.query(Recruitment).filter(Recruitment.uid == uid).first()
@@ -1034,13 +1034,13 @@ def format_time_slots(time_slots):
 def get_recruit_info(
     uid: str,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
     """获取纳新者基本信息"""
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     try:
         recruit = db.query(Recruitment).filter(Recruitment.uid == uid).first()
@@ -1076,13 +1076,13 @@ def get_recruit_info(
 @router.get("/schedule_stats", tags=["interview"])
 def get_schedule_statistics(
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
-    """获取面试排班统计信息"""
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # """获取面试排班统计信息"""
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     try:
         # 各阶段排班数量
@@ -1132,13 +1132,13 @@ class BatchInterviewUpdate(BaseModel):
 def batch_update_interviews(
     data: BatchInterviewUpdate,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
     """批量更新面试结果"""
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     try:
         for interview_id in data.interview_ids:
@@ -1167,13 +1167,13 @@ class ScheduleNotification(BaseModel):
 def send_schedule_notification(
     notification_data: ScheduleNotification,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
     """发送面试排班通知"""
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     try:
         # 获取面试排班信息
@@ -1238,90 +1238,90 @@ def send_schedule_notification(
         )
 
 
-@router.get("/debug/status", tags=["interview"])
-def get_debug_status(
-    db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
-):
-    """获取调试状态信息"""
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+# @router.get("/debug/status", tags=["interview"])
+# def get_debug_status(
+#     db: Session = Depends(get_db),
+#     # aid: str = Depends(get_current_admin),
+# ):
+#     """获取调试状态信息"""
+#     # if not is_manager(db, aid):
+#     #     raise HTTPException(
+#     #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+#     #     )
     
-    try:
-        # 获取所有纳新记录
-        total_recruits = db.query(Recruitment).count()
+#     try:
+#         # 获取所有纳新记录
+#         total_recruits = db.query(Recruitment).count()
         
-        # 获取有面试时间段的记录
-        recruits_with_slots = db.query(Recruitment).filter(
-            Recruitment.interview_time_slots.isnot(None),
-            Recruitment.interview_time_slots != ""
-        ).count()
+#         # 获取有面试时间段的记录
+#         recruits_with_slots = db.query(Recruitment).filter(
+#             Recruitment.interview_time_slots.isnot(None),
+#             Recruitment.interview_time_slots != ""
+#         ).count()
         
-        # 获取各状态的记录数量
-        not_started = db.query(Recruitment).filter(
-            Recruitment.interview_status == "not_started"
-        ).count()
+#         # 获取各状态的记录数量
+#         not_started = db.query(Recruitment).filter(
+#             Recruitment.interview_status == "not_started"
+#         ).count()
         
-        screening = db.query(Recruitment).filter(
-            Recruitment.interview_status == "screening"
-        ).count()
+#         screening = db.query(Recruitment).filter(
+#             Recruitment.interview_status == "screening"
+#         ).count()
         
-        first_round = db.query(Recruitment).filter(
-            Recruitment.interview_status == "first_round"
-        ).count()
+#         first_round = db.query(Recruitment).filter(
+#             Recruitment.interview_status == "first_round"
+#         ).count()
         
-        second_round = db.query(Recruitment).filter(
-            Recruitment.interview_status == "second_round"
-        ).count()
+#         second_round = db.query(Recruitment).filter(
+#             Recruitment.interview_status == "second_round"
+#         ).count()
         
-        # 获取面试排班记录数量
-        total_schedules = db.query(Interview).count()
-        scheduled_schedules = db.query(Interview).filter(
-            Interview.status == "scheduled"
-        ).count()
+#         # 获取面试排班记录数量
+#         total_schedules = db.query(Interview).count()
+#         scheduled_schedules = db.query(Interview).filter(
+#             Interview.status == "scheduled"
+#         ).count()
         
-        # 获取一些示例数据
-        sample_recruits = db.query(Recruitment).limit(5).all()
-        sample_schedules = db.query(Interview).limit(5).all()
+#         # 获取一些示例数据
+#         sample_recruits = db.query(Recruitment).limit(5).all()
+#         sample_schedules = db.query(Interview).limit(5).all()
         
-        return {
-            "total_recruits": total_recruits,
-            "recruits_with_time_slots": recruits_with_slots,
-            "interview_status_counts": {
-                "not_started": not_started,
-                "screening": screening,
-                "first_round": first_round,
-                "second_round": second_round
-            },
-            "schedule_counts": {
-                "total": total_schedules,
-                "scheduled": scheduled_schedules
-            },
-            "sample_recruits": [
-                {
-                    "uid": r.uid,
-                    "name": r.name,
-                    "interview_status": r.interview_status,
-                    "interview_time_slots": r.interview_time_slots
-                } for r in sample_recruits
-            ],
-            "sample_schedules": [
-                {
-                    "uid": s.uid,
-                    "stage": s.stage,
-                    "status": s.status,
-                    "interview_date": s.interview_date.isoformat() if s.interview_date else None
-                } for s in sample_schedules
-            ]
-        }
+#         return {
+#             "total_recruits": total_recruits,
+#             "recruits_with_time_slots": recruits_with_slots,
+#             "interview_status_counts": {
+#                 "not_started": not_started,
+#                 "screening": screening,
+#                 "first_round": first_round,
+#                 "second_round": second_round
+#             },
+#             "schedule_counts": {
+#                 "total": total_schedules,
+#                 "scheduled": scheduled_schedules
+#             },
+#             "sample_recruits": [
+#                 {
+#                     "uid": r.uid,
+#                     "name": r.name,
+#                     "interview_status": r.interview_status,
+#                     "interview_time_slots": r.interview_time_slots
+#                 } for r in sample_recruits
+#             ],
+#             "sample_schedules": [
+#                 {
+#                     "uid": s.uid,
+#                     "stage": s.stage,
+#                     "status": s.status,
+#                     "interview_date": s.interview_date.isoformat() if s.interview_date else None
+#                 } for s in sample_schedules
+#             ]
+#         }
         
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"获取调试状态时发生错误: {e}"
-        )
+#     except Exception as e:
+#         raise HTTPException(
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             detail=f"获取调试状态时发生错误: {e}"
+#         )
 
 
 def generate_schedule_csv(schedule_results: List[Dict[str, Any]], base_date: str) -> str:
@@ -1384,13 +1384,13 @@ def generate_schedule_csv(schedule_results: List[Dict[str, Any]], base_date: str
 @router.get("/time-slots", tags=["interview"])
 def get_interview_time_slots(
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
     """获取所有已排班的面试时间段"""
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     try:
         # 获取所有已排班的时间段
@@ -1433,13 +1433,13 @@ def get_interview_time_slots(
 def download_schedule_csv(
     filename: str,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
     """下载面试排班CSV文件"""
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     file_path = os.path.join("uploads", filename)
     
@@ -1467,13 +1467,13 @@ class CompleteInterviewRequest(BaseModel):
 def complete_interview(
     request: CompleteInterviewRequest,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
     """完成指定时间段的面试，将所有面试者的状态改为已完成"""
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     try:
         # 解析时间段
@@ -1606,13 +1606,13 @@ class PassInterviewRequest(BaseModel):
 def pass_interview(
     request: PassInterviewRequest,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
     """面试通过处理"""
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     try:
         # 查找纳新者

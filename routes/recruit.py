@@ -304,12 +304,12 @@ class RecruitResponse(BaseModel):
 def show_recruit_list(
     page: int = 1, size: int = 8, name: str = None, uid: str = None, degree: str = None, grade: str = None, major_name: str = None, status: str = None, department: str = None,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+        # aid: str = Depends(get_current_admin),
 ):
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     recruitments = db.query(Recruitment)
     if name:
         recruitments = recruitments.filter(Recruitment.name.like(f"%{name}%"))
@@ -413,12 +413,12 @@ class EvaluationAdd(BaseModel):
 def add_evaluation(
     data: EvaluationAdd,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     recruit = db.query(Recruitment).filter(Recruitment.uid == data.uid).first()
     if not recruit:
@@ -483,12 +483,12 @@ class EvaluationListResponse(BaseModel):
 def get_evaluations(
     uid: str,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     evaluations = db.query(Evaluation).filter(Evaluation.uid == uid).order_by(Evaluation.evaluation_time.desc()).all()
     
@@ -532,13 +532,13 @@ class InterviewPassRequest(BaseModel):
 def interview_pass(
     request: InterviewPassRequest,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
     """面试通过处理（纳新管理页面）"""
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     try:
         # 查找纳新者
@@ -655,13 +655,13 @@ def interview_pass(
 def get_recruit_detail(
     uid: str,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
-    """获取纳新者详细信息（包含面试通过状态）"""
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # """获取纳新者详细信息（包含面试通过状态）"""
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     recruit = db.query(Recruitment).filter(Recruitment.uid == uid).first()
     if not recruit:
@@ -700,7 +700,7 @@ class FinalAcceptRequest(BaseModel):
 def final_accept(
     request: FinalAcceptRequest,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
     vx_number = {
         'office' : 's1764958267',
@@ -709,10 +709,10 @@ def final_accept(
         'activity' : 'JXCzszszs'
     }
     """最终录取并发送钉钉通知"""
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     try:
         recruit = db.query(Recruitment).filter(Recruitment.uid == request.uid).first()
@@ -827,7 +827,7 @@ def final_accept(
 def final_reject_candidate(
     request: FinalAcceptRequest,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
     """最终拒绝候选人"""
     try:
@@ -936,12 +936,12 @@ class DeleteRecruit(BaseModel):
 def assign_department(
     data: AssignDepartment,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     recruit = db.query(Recruitment).filter(Recruitment.uid == data.uid).first()
     if not recruit:
@@ -965,13 +965,13 @@ def assign_department(
 def delete_recruit(
     data: DeleteRecruit,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
     """删除纳新记录"""
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     recruit = db.query(Recruitment).filter(Recruitment.uid == data.uid).first()
     if not recruit:
@@ -1009,13 +1009,13 @@ def delete_recruit(
 @router.post("/delete_all_recruits", tags=["admin"])
 def delete_all_recruits(
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
     """删除所有纳新记录"""
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     try:
         # 获取所有纳新记录数量
@@ -1057,7 +1057,7 @@ from urllib.parse import quote
 @router.get("/export_recruits", tags=["admin"])
 def export_recruits(
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
     include_basic_info: str = "true",
     include_contact: str = "true",
     include_department_preference: str = "true",
@@ -1066,10 +1066,10 @@ def export_recruits(
     export_format: str = "excel"
 ):
     """导出纳新者数据为Excel文件"""
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+    #     )
     
     try:
         # 转换字符串参数为布尔值

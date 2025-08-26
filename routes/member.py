@@ -193,7 +193,7 @@ def get_member_detail(
 def create_member(
     data: MemberCreate,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
     """创建干事（从纳新者迁移）"""
     # 检查是否已存在
@@ -241,7 +241,7 @@ def update_member(
     uid: str,
     data: MemberUpdate,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
     """更新干事信息"""
     member = db.query(Member).filter(Member.uid == uid).first()
@@ -269,7 +269,7 @@ def update_member(
 def delete_member(
     uid: str,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
     """删除干事"""
     member = db.query(Member).filter(Member.uid == uid).first()
@@ -289,7 +289,7 @@ def delete_member(
 @router.get("/members/stats", tags=["member"])
 def get_member_stats(
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
+    # aid: str = Depends(get_current_admin),
 ):
     """获取干事统计信息"""
     # 按部门统计
