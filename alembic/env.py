@@ -18,11 +18,12 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
+target_metadata = None
 
-import sys, os
-
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-
+# other values from the config, defined by the needs of env.py,
+# can be acquired:
+# my_important_option = config.get_main_option("my_important_option")
+# ... etc.
 from models import Base
 from models.news import News
 from models.user import User
@@ -35,13 +36,11 @@ from models.register import Register
 from models.relation.user_event import user_event
 from models.relation.admin_roles import admin_role_association
 from models.relation.user_roles import user_role_association
+from models.interview import Interview, InterviewTimeSlot
+from models.recruit import Recruitment, Evaluation
+from models.member import Member
 
 target_metadata = Base.metadata
-
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
 
 
 def run_migrations_offline() -> None:
@@ -62,7 +61,6 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
-        render_as_batch=True,
     )
 
     with context.begin_transaction():
@@ -84,7 +82,7 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata, render_as_batch=True
+            connection=connection, target_metadata=target_metadata
         )
 
         with context.begin_transaction():
