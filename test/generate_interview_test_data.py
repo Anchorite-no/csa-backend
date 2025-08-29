@@ -7,6 +7,7 @@ Interview测试数据生成脚本
 import requests
 import json
 from datetime import datetime, timedelta
+import hashlib
 import random
 
 # 配置服务器地址
@@ -114,9 +115,11 @@ def generate_interview_test_data():
     # 随机生成15-40个纳新记录
     total_recruits = random.randint(10, 20)
     
+    passwd = hashlib.sha256(b"ZJUCSA@2025_90381664123847").hexdigest()
+
     data = {
         "uid": "00001",
-        "passwd": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9"
+        "passwd": passwd
     }
     response = requests.post(f"{BASE_URL}/api/user/login/admin", json=data, timeout=10)
     print(response.json())
