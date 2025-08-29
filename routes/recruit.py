@@ -4,7 +4,9 @@ import os
 import json
 from pathlib import Path
 from typing import Optional, List, Annotated
+from io import BytesIO
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status, UploadFile, File
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, StringConstraints
 from sqlalchemy.orm import Session
 from markdown import markdown
@@ -302,7 +304,7 @@ class RecruitResponse(BaseModel):
 
 @router.get("/recruits", response_model=RecruitResponse, tags=["admin"])
 def show_recruit_list(
-    page: int = 1, size: int = 8, name: str = None, uid: str = None, degree: str = None, grade: str = None, major_name: str = None, status: str = None, department: str = None,
+    page: int = 1, size: int = 8, name: str = None, uid: str = None, degree: str = None, grade: str = None, major_name: str = None, status: str = None, department: str = None, all: bool = False,
     db: Session = Depends(get_db),
         # aid: str = Depends(get_current_admin),
 ):
@@ -353,8 +355,9 @@ def show_recruit_list(
     # 获取总数
     total = recruitments.count()
     
-    # 应用分页
-    recruitments = recruitments.offset((page - 1) * size).limit(size)
+    # 如果请求全部数据，则不应用分页
+    if not all:
+        recruitments = recruitments.offset((page - 1) * size).limit(size)
     
     result_list = []
     for recruit in recruitments:
@@ -688,6 +691,13 @@ def get_recruit_detail(
         "evaluator_id": recruit.evaluator_id,
         "evaluation_time": recruit.evaluation_time,
         "is_admitted": recruit.is_admitted,
+        "office_department_willing": recruit.office_department_willing,
+        "competition_department_willing": recruit.competition_department_willing,
+        "activity_department_willing": recruit.activity_department_willing,
+        "research_department_willing": recruit.research_department_willing,
+        "if_agree_to_be_reassigned": recruit.if_agree_to_be_reassigned,
+        "if_be_member": recruit.if_be_member,
+        "render": recruit.render
     }
 
 
@@ -1098,8 +1108,13 @@ def export_recruits(
                             '姓名': recruit.name or '',
                             '学号': recruit.uid or '',
                             '性别': '女' if recruit.render else '男',
-                            '学位': '硕士' if recruit.degree == 1 else '博士',
-                            '年级': recruit.grade or '',
+                            '学位': {
+                                0: '学士',
+                                1: '硕士', 
+                                2: '博士',
+                                3: '博士后'
+                            }.get(recruit.degree, '学士'),
+                            '年级': f"{recruit.grade}级" if recruit.grade else '',
                             '专业': recruit.major_name or '',
                             '学院': recruit.college_name or '',
                         })
@@ -1125,7 +1140,7 @@ def export_recruits(
                     
                     if include_evaluation_bool:
                         row_data.update({
-                            '状态': {
+                            '评价状态': {
                                 'pending': '待评价',
                                 'accepted': '已通过',
                                 'rejected': '已拒绝'
@@ -1137,7 +1152,17 @@ def export_recruits(
                                 'activity': '活动部'
                             }.get(recruit.assigned_department, '未分配'),
                             '评价时间': recruit.evaluation_time.strftime('%Y-%m-%d %H:%M:%S') if recruit.evaluation_time else '',
-                            '评价意见': '; '.join(evaluation_comments) if evaluation_comments else ''
+                            '评价意见': '; '.join(evaluation_comments) if evaluation_comments else '',
+                            '面试状态': {
+                                'first_round': '一面',
+                                'second_round': '二面',
+                                'completed': '已完成'
+                            }.get(recruit.interview_status, '一面'),
+                            '面试完成': '是' if recruit.interview_completed else '否',
+                            '一面通过': '是' if recruit.first_round_passed else '否',
+                            '二面通过': '是' if recruit.second_round_passed else '否',
+                            '是否录取': '是' if recruit.is_admitted else '否',
+                            '录取时间': recruit.admission_time.strftime('%Y-%m-%d %H:%M:%S') if recruit.admission_time else ''
                         })
                     
                     data.append(row_data)
@@ -1166,34 +1191,49 @@ def export_recruits(
                 headers=headers
             )
         else:
-            output = BytesIO()
-            with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                df.to_excel(writer, sheet_name='纳新者数据', index=False)
+            try:
+                output = BytesIO()
+                with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                    df.to_excel(writer, sheet_name='纳新者数据', index=False)
+                    
+                    worksheet = writer.sheets['纳新者数据']
+                    for column in worksheet.columns:
+                        max_length = 0
+                        column_letter = column[0].column_letter
+                        for cell in column:
+                            try:
+                                if len(str(cell.value)) > max_length:
+                                    max_length = len(str(cell.value))
+                            except:
+                                pass
+                        adjusted_width = min(max_length + 2, 50)
+                        worksheet.column_dimensions[column_letter].width = adjusted_width
                 
-                worksheet = writer.sheets['纳新者数据']
-                for column in worksheet.columns:
-                    max_length = 0
-                    column_letter = column[0].column_letter
-                    for cell in column:
-                        try:
-                            if len(str(cell.value)) > max_length:
-                                max_length = len(str(cell.value))
-                        except:
-                            pass
-                    adjusted_width = min(max_length + 2, 50)
-                    worksheet.column_dimensions[column_letter].width = adjusted_width
-            
-            output.seek(0)
-            
-            # 使用编码后的文件名
-            headers = {
-                "Content-Disposition": f"attachment; filename*=UTF-8''{filename_encoded}.xlsx"
-            }
-            return StreamingResponse(
-                BytesIO(output.getvalue()),
-                media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                headers=headers
-            )
+                output.seek(0)
+                
+                # 使用编码后的文件名
+                headers = {
+                    "Content-Disposition": f"attachment; filename*=UTF-8''{filename_encoded}.xlsx"
+                }
+                return StreamingResponse(
+                    BytesIO(output.getvalue()),
+                    media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers=headers
+                )
+            except ImportError:
+                # 如果没有安装 openpyxl，回退到 CSV 格式
+                output = BytesIO()
+                df.to_csv(output, index=False, encoding='utf-8-sig')
+                output.seek(0)
+                
+                headers = {
+                    "Content-Disposition": f"attachment; filename*=UTF-8''{filename_encoded}.csv"
+                }
+                return StreamingResponse(
+                    BytesIO(output.getvalue()),
+                    media_type="text/csv",
+                    headers=headers
+                )
         
     except Exception as e:
         import traceback

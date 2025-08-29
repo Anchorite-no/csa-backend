@@ -1383,6 +1383,7 @@ def generate_schedule_csv(schedule_results: List[Dict[str, Any]], base_date: str
 
 @router.get("/time-slots", tags=["interview"])
 def get_interview_time_slots(
+    base_date: Optional[str] = None,
     db: Session = Depends(get_db),
     # aid: str = Depends(get_current_admin),
 ):
@@ -1393,34 +1394,107 @@ def get_interview_time_slots(
     #     )
     
     try:
-        # 获取所有已排班的时间段
-        time_slots = db.query(InterviewTimeSlot).filter(
-            InterviewTimeSlot.is_active == True,
-            InterviewTimeSlot.current_count > 0
-        ).all()
-        
-        # 转换为前端需要的格式
-        time_slots_list = []
-        for slot in time_slots:
-            time_slots_list.append({
-                "id": slot.id,
-                "name": slot.slot_name,
-                "day_of_week": slot.day_of_week,
-                "start_time": slot.start_time,
-                "end_time": slot.end_time,
-                "week_number": slot.week_number,
-                "venue": slot.venue,
-                "current_count": slot.current_count,
-                "max_capacity": slot.max_capacity
-            })
-        
-        # 按时间段名称排序
-        time_slots_list.sort(key=lambda x: x["name"])
-        
-        return {
-            "success": True,
-            "time_slots": time_slots_list
-        }
+        if base_date:
+            # 如果提供了基准日期，计算基于该日期的时间段
+            from datetime import datetime, timedelta
+            
+            base_date_obj = datetime.strptime(base_date, "%Y-%m-%d")
+            weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+            
+            # 定义基础时间段模板
+            base_time_slots = [
+                { 'day': 1, 'times': ['19:00-20:00', '20:00-21:00', '21:00-22:00'] }, # 周一
+                { 'day': 2, 'times': ['19:00-20:00', '20:00-21:00', '21:00-22:00'] }, # 周二
+                { 'day': 3, 'times': ['19:00-20:00', '20:00-21:00', '21:00-22:00'] }, # 周三
+                { 'day': 4, 'times': ['19:00-20:00', '20:00-21:00', '21:00-22:00'] }, # 周四
+                { 'day': 5, 'times': ['19:00-20:00', '20:00-21:00', '21:00-22:00'] }, # 周五
+                { 'day': 6, 'times': ['10:00-11:00', '11:00-12:00', '14:00-15:00', '15:00-16:00', '16:00-17:00', '19:00-20:00', '20:00-21:00', '21:00-22:00'] }, # 周六
+                { 'day': 0, 'times': ['10:00-11:00', '11:00-12:00', '14:00-15:00', '15:00-16:00', '16:00-17:00', '19:00-20:00', '20:00-21:00', '21:00-22:00'] }  # 周日
+            ]
+            
+            time_slots_list = []
+            
+            # 生成本周和下周的时间段
+            for week in range(2):
+                for day_config in base_time_slots:
+                    target_day = day_config['day']
+                    current_day = base_date_obj.weekday()  # 0=周一, 1=周二, ..., 6=周日
+                    days_to_add = target_day - current_day
+                    
+                    # 如果目标日期在当前日期之前，加7天到下周
+                    if days_to_add < 0:
+                        days_to_add += 7
+                    
+                    # 加上周数偏移
+                    days_to_add += week * 7
+                    
+                    target_date = base_date_obj + timedelta(days=days_to_add)
+                    date_str = target_date.strftime("%m/%d")
+                    day_name = weekdays[target_day]
+                    week_label = '本周' if week == 0 else '下周'
+                    
+                    for time_range in day_config['times']:
+                        # 查找该时间段的排班数量
+                        slot_name = f"{day_name} {time_range}"
+                        start_hour = int(time_range.split('-')[0].split(':')[0])
+                        end_hour = int(time_range.split('-')[1].split(':')[0])
+                        
+                        start_time = target_date.replace(hour=start_hour, minute=0)
+                        end_time = target_date.replace(hour=end_hour, minute=0)
+                        
+                        scheduled_count = db.query(Interview).filter(
+                            Interview.interview_date >= start_time,
+                            Interview.interview_date < end_time
+                        ).count()
+                        
+                        time_slots_list.append({
+                            "id": f"{slot_name}_{week}",
+                            "name": f"{day_name} {date_str} {time_range} ({week_label})",
+                            "day_of_week": target_day,
+                            "start_time": time_range.split('-')[0],
+                            "end_time": time_range.split('-')[1],
+                            "week_number": week,
+                            "venue": "",
+                            "current_count": scheduled_count,
+                            "max_capacity": 8
+                        })
+            
+            # 按时间段名称排序
+            time_slots_list.sort(key=lambda x: x["name"])
+            
+            return {
+                "success": True,
+                "time_slots": time_slots_list
+            }
+        else:
+            # 如果没有提供基准日期，返回原有的逻辑
+            time_slots = db.query(InterviewTimeSlot).filter(
+                InterviewTimeSlot.is_active == True,
+                InterviewTimeSlot.current_count > 0
+            ).all()
+            
+            # 转换为前端需要的格式
+            time_slots_list = []
+            for slot in time_slots:
+                time_slots_list.append({
+                    "id": slot.id,
+                    "name": slot.slot_name,
+                    "day_of_week": slot.day_of_week,
+                    "start_time": slot.start_time,
+                    "end_time": slot.end_time,
+                    "week_number": slot.week_number,
+                    "venue": slot.venue,
+                    "current_count": slot.current_count,
+                    "max_capacity": slot.max_capacity
+                })
+            
+            # 按时间段名称排序
+            time_slots_list.sort(key=lambda x: x["name"])
+            
+            return {
+                "success": True,
+                "time_slots": time_slots_list
+            }
         
     except Exception as e:
         raise HTTPException(
