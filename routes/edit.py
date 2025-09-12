@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from misc.auth import get_current_admin, get_current_user
+from misc.image_manager import cleanup_unused_images
 from models import get_db
 from models.event import Event
 from models.event_category import EventCategory
@@ -34,12 +35,18 @@ def edit_news(
             status_code=status.HTTP_403_FORBIDDEN, detail="当前用户没有权限进行此操作"
         )
 
+    old_content = ""
+    old_image = ""
+    
     if data.nid:
         news = db.query(News).filter_by(nid=data.nid).first()
         if not news:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="新闻未找到"
             )
+        # 保存旧内容用于图片清理
+        old_content = news.content or ""
+        old_image = news.image or ""
     else:
         news = News()
 
@@ -57,6 +64,17 @@ def edit_news(
             db.add(news)
 
         db.commit()
+        
+        # 如果是编辑操作，清理不再使用的图片
+        if data.nid:
+            deleted_count = cleanup_unused_images(
+                old_content=old_content,
+                new_content=data.content,
+                old_image=old_image,
+                new_image=data.image
+            )
+            if deleted_count > 0:
+                print(f"清理了 {deleted_count} 个不再使用的图片文件")
 
     except Exception as e:
         db.rollback()
@@ -138,12 +156,18 @@ def edit_event(
     #     )
     first_publish = 0
 
+    old_content = ""
+    old_image = ""
+    
     if data.eid:
         event = db.query(Event).filter_by(eid=data.eid).first()
         if not event:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="活动未找到"
             )
+        # 保存旧内容用于图片清理
+        old_content = event.description or ""
+        old_image = event.image or ""
     else:
         event = Event()
 
@@ -166,6 +190,17 @@ def edit_event(
             db.add(event)
 
         db.commit()
+        
+        # 如果是编辑操作，清理不再使用的图片
+        if data.eid:
+            deleted_count = cleanup_unused_images(
+                old_content=old_content,
+                new_content=data.description,
+                old_image=old_image,
+                new_image=data.image
+            )
+            if deleted_count > 0:
+                print(f"清理了 {deleted_count} 个不再使用的图片文件")
 
     except Exception as e:
         db.rollback()

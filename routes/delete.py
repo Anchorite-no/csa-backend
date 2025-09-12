@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from misc.auth import get_current_admin
+from misc.image_manager import cleanup_all_images
 from models import get_db
 from models.event import Event
 from models.event_category import EventCategory
@@ -38,9 +39,19 @@ def delete_news(
             detail="新闻未找到"
         )
 
+    # 保存内容用于图片清理
+    content = news.content or ""
+    image = news.image or ""
+
     try:
         db.delete(news)
         db.commit()
+        
+        # 清理所有相关图片
+        deleted_count = cleanup_all_images(content, image)
+        if deleted_count > 0:
+            print(f"删除新闻时清理了 {deleted_count} 个图片文件")
+            
     except Exception as e:
         db.rollback()
         raise HTTPException(
@@ -103,9 +114,19 @@ def delete_event(
             detail="活动未找到"
         )
 
+    # 保存内容用于图片清理
+    content = event.description or ""
+    image = event.image or ""
+
     try:
         db.delete(event)
         db.commit()
+        
+        # 清理所有相关图片
+        deleted_count = cleanup_all_images(content, image)
+        if deleted_count > 0:
+            print(f"删除活动时清理了 {deleted_count} 个图片文件")
+            
     except Exception as e:
         db.rollback()
         raise HTTPException(

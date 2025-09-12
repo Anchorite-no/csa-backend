@@ -3,7 +3,6 @@ import time
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 
 from misc.auth import login_required, login_required_admin
 from config import get_version
@@ -21,6 +20,8 @@ def init_app_routes(app: FastAPI):
     from routes.dingtalk import router as dingtalk_router
     from routes.interview import router as interview_router
     from routes.member import router as member_router
+    from routes.upload import router as upload_router
+    from routes.images import router as images_router
 
     app.include_router(
         news_router,
@@ -94,6 +95,19 @@ def init_app_routes(app: FastAPI):
         prefix="/api/member",
         tags=["member"],
         dependencies=[Depends(login_required_admin)],
+    )
+    
+    app.include_router(
+        upload_router,
+        prefix="/api/upload",
+        tags=["upload"],
+        dependencies=[Depends(login_required_admin)],
+    )
+    
+    app.include_router(
+        images_router,
+        prefix="/api",
+        tags=["images"],
     )
 
     @app.middleware("http")
