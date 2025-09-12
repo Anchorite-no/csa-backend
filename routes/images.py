@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Query
 from fastapi.responses import FileResponse
 
 router = APIRouter()
@@ -9,15 +9,15 @@ router = APIRouter()
 IMAGES_DIR = Path("uploads/images")
 
 
-@router.get("/images/{file_path:path}")
-async def get_image(file_path: str):
+@router.get("/images")
+async def get_image(name: str = Query(..., description="图片文件名或相对路径")):
     """
     获取图片文件
-    file_path: 图片文件的相对路径，例如 "8d1441da-6e01-4336-ba1a-2f15e93e027c.png" 或 "2025/09/12/8d1441da-6e01-4336-ba1a-2f15e93e027c.png"
+    name: 图片文件名或相对路径，例如 "8d1441da-6e01-4336-ba1a-2f15e93e027c.png" 或 "2025/09/12/8d1441da-6e01-4336-ba1a-2f15e93e027c.png"
     """
     try:
         # 构建完整的文件路径
-        full_path = IMAGES_DIR / file_path
+        full_path = IMAGES_DIR / name
         
         # 安全检查：确保文件在允许的目录内
         if not str(full_path.resolve()).startswith(str(IMAGES_DIR.resolve())):
