@@ -169,3 +169,4 @@ test/.pytest_cache
 test/data.sqlite
 
 uploads/resumes/*
+uploads/images/*
