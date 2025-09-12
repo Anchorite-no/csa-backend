@@ -566,7 +566,6 @@ def interview_pass(
 • 学号：{recruit.uid}
 • 面试阶段：第一轮面试
 • 面试结果：通过
-• 通过时间：{datetime.now().strftime('%Y年%m月%d日')}
 
 【后续安排】
 你将进入第二轮面试环节。第二轮面试的具体时间、地点和形式将通过钉钉OA另行通知，请保持关注。
@@ -603,7 +602,6 @@ def interview_pass(
 • 学号：{recruit.uid}
 • 面试阶段：第二轮面试
 • 面试结果：通过
-• 通过时间：{datetime.now().strftime('%Y年%m月%d日')}
 
 【后续安排】
 你的面试流程已经完成，接下来将进入部门分配和最终录取环节。具体安排将通过钉钉OA另行通知，请保持关注。
@@ -792,7 +790,6 @@ def final_accept(
 • 姓名：{recruit.name}
 • 学号：{recruit.uid}
 • 录取部门：{department_name}
-• 录取时间：{datetime.now().strftime('%Y年%m月%d日')}
 
 【关于CSA】
 浙江大学学生网络空间安全协会（ZJUCSA）是一个专注于网络空间安全技术学习、研究和实践的学术社团。我们致力于为对网络安全感兴趣的同学提供一个学习交流的平台，通过技术分享、竞赛培训、项目实践等多种形式，帮助成员提升专业技能。
