@@ -123,10 +123,10 @@ class RecruitItem(BaseModel):
     name: Annotated[str, StringConstraints(max_length=12)]
     render: bool
     uid: Annotated[str, StringConstraints(pattern=r"^\d{1,10}$")]
-    major_id: str
+    major_id: Optional[str] = None  # 硕士和博士可以为空
     major_name: str
-    college_id: str
-    college_name: str
+    college_id: Optional[str] = None  # 硕士和博士可以为空
+    college_name: Optional[str] = None  # 硕士和博士可以为空
     degree: Annotated[int, Field(ge=0, le=4)]
     grade: Annotated[int, Field(ge=21, le=25)]
     phone: Annotated[str, StringConstraints(pattern=r"^1[3-9]\d{9}$")]
@@ -146,19 +146,26 @@ def confirm_recruit(data: RecruitItem, db: Session = Depends(get_db)):
     if existing_recruit:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="该学号已提交过报名信息")
     
-    csv_file_path = f"major/specialties_data_20{data.grade}.csv"
-    df = pd.read_csv(csv_file_path, dtype=str)
-    
-    if data.major_name not in df['major_name'].values:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="专业不存在")
-    
-    major_id = df[df['major_name'] == data.major_name]['major_id'].values[0]
-    college_id = df[df['major_name'] == data.major_name]['college_id'].values[0]
-    college_name = df[df['major_name'] == data.major_name]['college_name'].values[0]
-    
+    # 只对学士学位进行专业验证和教学计划号匹配
     if data.degree == 0:
+        csv_file_path = f"major/specialties_data_20{data.grade}.csv"
+        df = pd.read_csv(csv_file_path, dtype=str)
+        
+        if data.major_name not in df['major_name'].values:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="专业不存在")
+        
+        major_id = df[df['major_name'] == data.major_name]['major_id'].values[0]
+        college_id = df[df['major_name'] == data.major_name]['college_id'].values[0]
+        college_name = df[df['major_name'] == data.major_name]['college_name'].values[0]
+        
+        # 验证教学计划号匹配
         if data.major_id != major_id or data.college_id != college_id or data.college_name != college_name:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="专业或学院信息不匹配")
+    else:
+        # 对于硕士和博士，使用默认的教学计划号，不进行CSV验证
+        major_id = data.major_id if data.major_id else "DEFAULT_MASTER_PHD"
+        college_id = data.college_id if data.college_id else "DEFAULT_COLLEGE"
+        college_name = data.college_name if data.college_name else "默认学院"
 
     # 创建新的报名记录
     new_recruit = Recruitment(
