@@ -1200,7 +1200,7 @@ def send_schedule_notification(
         stage_label = stage_labels.get(schedule.stage, schedule.stage)
         interview_date = schedule.interview_date.strftime("%Y年%m月%d日 %H:%M")
         
-        title = f"CSA面试通知 - {stage_label}"
+        title = f"ZJUCSA面试通知 - {stage_label}"
         description = f"亲爱的 {recruit.name} 同学！\n\n您的面试已安排如下：\n\n面试阶段：{stage_label}\n面试时间：{interview_date}\n面试形式：{get_interview_format_label(schedule.interview_format)}\n面试时长：{schedule.interview_duration}分钟"
         
         if schedule.location:
@@ -1608,7 +1608,7 @@ def complete_interview(
                 
                 # 发送面试完成通知
                 stage_label = "第一轮" if interview.stage == 'first_round' else "第二轮"
-                title = f"浙江大学学生网络空间安全协会（CSA）{stage_label}面试完成通知"
+                title = f"浙江大学学生网络空间安全协会（ZJUCSA）{stage_label}面试完成通知"
                 description = f"""亲爱的 {recruit.name} 同学！
 
 你的{stage_label}面试已经完成！
@@ -1618,7 +1618,6 @@ def complete_interview(
 • 学号：{recruit.uid}
 • 面试阶段：{stage_label}面试
 • 面试时间：{interview.interview_date.strftime('%Y年%m月%d日 %H:%M')}
-• 完成时间：{datetime.now().strftime('%Y年%m月%d日')}
 
 【后续安排】
 面试结果将在近期通过钉钉OA通知，请保持关注。

@@ -863,19 +863,19 @@ def final_reject_candidate(
         if recruit.first_round_passed and not recruit.second_round_passed:
             # 已通过一面，拒绝二面
             reject_stage = "二面"
-            reject_message = f"很遗憾，您在第二轮面试中未能通过。感谢您对CSA的关注，希望您继续努力！"
+            reject_message = f"很遗憾，您在第二轮面试中未能通过。感谢您对ZJUCSA的关注，希望您继续努力！"
         elif recruit.first_round_passed and recruit.second_round_passed:
             # 已通过一面和二面，拒绝最终录取
             reject_stage = "最终录取"
-            reject_message = f"很遗憾，您在最终录取阶段未能通过。感谢您对CSA的关注，希望您继续努力！"
+            reject_message = f"很遗憾，您在最终录取阶段未能通过。感谢您对ZJUCSA的关注，希望您继续努力！"
         elif not recruit.first_round_passed:
             # 未通过一面，拒绝一面
             reject_stage = "一面"
-            reject_message = f"很遗憾，您在第一轮面试中未能通过。感谢您对CSA的关注，希望您继续努力！"
+            reject_message = f"很遗憾，您在第一轮面试中未能通过。感谢您对ZJUCSA的关注，希望您继续努力！"
         else:
             # 其他情况
             reject_stage = "面试"
-            reject_message = f"很遗憾，您在面试中未能通过。感谢您对CSA的关注，希望您继续努力！"
+            reject_message = f"很遗憾，您在面试中未能通过。感谢您对ZJUCSA的关注，希望您继续努力！"
         
         # 更新状态为拒绝
         recruit.evaluation_status = "rejected"
@@ -895,17 +895,17 @@ def final_reject_candidate(
 • 面试阶段：{reject_stage}
 • 通知时间：{datetime.now().strftime('%Y年%m月%d日')}
 
-【关于CSA】
+【关于ZJUCSA】
 浙江大学学生网络空间安全协会（ZJUCSA）是一个专注于网络空间安全技术学习、研究和实践的学术社团。
 
 【后续建议】
-虽然本次面试未能通过，但我们鼓励您继续关注网络安全领域的学习和发展。CSA会定期举办技术分享和培训活动，欢迎您继续参与。
+虽然本次面试未能通过，但我们鼓励您继续关注网络安全领域的学习和发展。ZJUCSA会定期举办技术分享和培训活动，欢迎您继续参与。
 
 【联系方式】
 如有任何疑问，请通过以下方式联系我们：
 • 邮箱：csa@zju.edu.cn
 
-感谢您对CSA的关注和支持！
+感谢您对ZJUCSA的关注和支持！
 
 连心为网，筑梦为安！
 浙江大学学生网络空间安全协会（ZJUCSA）
