@@ -1,4 +1,4 @@
-# 🚀 CSA Backend
+# ZJUCSA Backend
 
 > **浙江大学学生网络空间安全协会后端服务**  
 > *现代化、高性能、企业级的Python Web API服务*
