@@ -39,7 +39,6 @@ def delete_news(
             detail="新闻未找到"
         )
 
-    # 保存内容用于图片清理
     content = news.content or ""
     image = news.image or ""
 
@@ -47,7 +46,6 @@ def delete_news(
         db.delete(news)
         db.commit()
         
-        # 清理所有相关图片
         deleted_count = cleanup_all_images(content, image)
         if deleted_count > 0:
             print(f"删除新闻时清理了 {deleted_count} 个图片文件")
@@ -98,12 +96,12 @@ def delete_event(
 def delete_event(
         data: DeleteEvent,
         db: Session = Depends(get_db),
-        # aid: str = Depends(get_current_admin)
+        
 ):
-    # if not is_manager(db, aid):
-    #     raise HTTPException(
-    #         status_code=status.HTTP_403_FORBIDDEN,
-    #         detail="当前管理员没有权限进行此操作"
+    
+    
+    
+    
     #     )
 
     event = db.query(Event).filter_by(eid=data.eid).first()
@@ -114,7 +112,6 @@ def delete_event(
             detail="活动未找到"
         )
 
-    # 保存内容用于图片清理
     content = event.description or ""
     image = event.image or ""
 
@@ -122,7 +119,6 @@ def delete_event(
         db.delete(event)
         db.commit()
         
-        # 清理所有相关图片
         deleted_count = cleanup_all_images(content, image)
         if deleted_count > 0:
             print(f"删除活动时清理了 {deleted_count} 个图片文件")

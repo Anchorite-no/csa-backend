@@ -16,7 +16,6 @@ router = APIRouter()
 
 
 def generate_seid() -> str:
-    # generate 24 random characters
     return "".join(random.choices(string.ascii_letters + string.digits, k=24))
 
 class NewSession(BaseModel):
@@ -41,7 +40,6 @@ class RequestMiniappStatus(BaseModel):
 class SubmitRegister(BaseModel):
     seid: str
     email: str
-    # and so on
 
 
 @router.get("/new_sess")
@@ -49,7 +47,6 @@ def create_new_sess(code: str, db: Session = Depends(get_db)) -> NewSession:
     if not code:
         raise HTTPException(status_code=400, detail="Invalid code")
 
-    # get userinfo from cas
 
     cas_url = "https://zjuam.zju.edu.cn/cas/oauth2.0/accessToken"
     cas_data = {
@@ -113,7 +110,6 @@ def submit_miniapp(data: SubmitMiniappInfo, db: Session = Depends(get_db)):
     if not register:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    # submit code to miniapp
     miniapp_url = "https://api.weixin.qq.com/sns/jscode2session"
     miniapp_params = {
         "appid": get_config("WEIXIN_APP_ID"),
@@ -163,7 +159,6 @@ def register(data: SubmitRegister, db: Session = Depends(get_db)):
     if not data.uid or not data.nick or not data.openid:
         raise HTTPException(status_code=400, detail="Invalid userinfo")
 
-    # process register
     # ......
 
     db.delete(register)

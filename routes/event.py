@@ -105,7 +105,6 @@ def get_event_detail(eid: str, db: Session = Depends(get_db)):
     return event_detail
 
 
-# todo: which type? signin or signup participation has been defined. refer to it.
 
 
 class ParticipationItem(BaseModel):

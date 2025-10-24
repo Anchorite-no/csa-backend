@@ -31,14 +31,12 @@ router = APIRouter()
 
 
 def matchTimeSlotFromDate(interview_date: datetime) -> str:
-    """从面试日期匹配时间段"""
+    """Match time slot from interview date"""
     weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
-    day_of_week = interview_date.weekday()  # 0=周一, 1=周二, ..., 6=周日
     hour = interview_date.hour
     
     day_name = weekdays[day_of_week]
     
-    # 根据小时数匹配时间段
     if hour >= 19 and hour < 20:
         return f"{day_name} 19:00-20:00"
     elif hour >= 20 and hour < 21:
@@ -58,7 +56,6 @@ def matchTimeSlotFromDate(interview_date: datetime) -> str:
     
     return f"{day_name} {hour:02d}:00-{(hour+1):02d}:00"
 
-# 创建简历存储目录
 RESUME_UPLOAD_DIR = Path("uploads/resumes")
 RESUME_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -123,10 +120,7 @@ class RecruitItem(BaseModel):
     name: Annotated[str, StringConstraints(max_length=12)]
     render: bool
     uid: Annotated[str, StringConstraints(pattern=r"^\d{1,10}$")]
-    major_id: Optional[str] = None  # 硕士和博士可以为空
     major_name: str
-    college_id: Optional[str] = None  # 硕士和博士可以为空
-    college_name: Optional[str] = None  # 硕士和博士可以为空
     degree: Annotated[int, Field(ge=0, le=4)]
     grade: Annotated[int, Field(ge=21, le=25)]
     phone: Annotated[str, StringConstraints(pattern=r"^1[3-9]\d{9}$")]
@@ -138,7 +132,7 @@ class RecruitItem(BaseModel):
     if_be_member: bool
     introduction: Annotated[str, StringConstraints(max_length=250)]
     skill: Annotated[str, StringConstraints(max_length=250)]
-    interview_time_slots: List[str] = Field(default_factory=list, description="面试时间段选择")
+    interview_time_slots: List[str] = Field(default_factory=list, description="Interview time slot selection")
 
 @router.post("/recruit_confirm")
 def confirm_recruit(data: RecruitItem, db: Session = Depends(get_db)):
@@ -146,7 +140,6 @@ def confirm_recruit(data: RecruitItem, db: Session = Depends(get_db)):
     if existing_recruit:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="该学号已提交过报名信息")
     
-    # 只对学士学位进行专业验证和教学计划号匹配
     if data.degree == 0:
         csv_file_path = f"major/specialties_data_20{data.grade}.csv"
         df = pd.read_csv(csv_file_path, dtype=str)
@@ -158,16 +151,13 @@ def confirm_recruit(data: RecruitItem, db: Session = Depends(get_db)):
         college_id = df[df['major_name'] == data.major_name]['college_id'].values[0]
         college_name = df[df['major_name'] == data.major_name]['college_name'].values[0]
         
-        # 验证教学计划号匹配
         if data.major_id != major_id or data.college_id != college_id or data.college_name != college_name:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="专业或学院信息不匹配")
     else:
-        # 对于硕士和博士，使用默认的教学计划号，不进行CSV验证
         major_id = data.major_id if data.major_id else "DEFAULT_MASTER_PHD"
         college_id = data.college_id if data.college_id else "DEFAULT_COLLEGE"
         college_name = data.college_name if data.college_name else "默认学院"
 
-    # 创建新的报名记录
     new_recruit = Recruitment(
         name=data.name,
         render=data.render,
@@ -187,7 +177,6 @@ def confirm_recruit(data: RecruitItem, db: Session = Depends(get_db)):
         if_be_member=data.if_be_member,
         introduction=data.introduction,
         skill=data.skill,
-        interview_time_slots=json.dumps(data.interview_time_slots),  # 将列表转换为JSON字符串
         evaluation_status="pending",
         evaluation_time=datetime.now(),
         evaluator_id="",
@@ -197,22 +186,13 @@ def confirm_recruit(data: RecruitItem, db: Session = Depends(get_db)):
         db.add(new_recruit)
         db.commit()
         
-        # 发送钉钉通知消息
-        # 恭喜 {data.name} 同学！
 
-        # 你已成功提交浙江大学学生网络空间安全协会（ZJUCSA）的招新报名申请。
 
-        # 首先，衷心感谢你对CSA的关注与认可。我们非常期待能有更多像你一样对网络空间安全充满热情的同学加入我们，一同探索未知的技术领域。
 
-        # 我们已经收到了你的申请，并会尽快进行筛选。面试安排将通过钉钉OA、短信或电话形式通知你，请务必保持手机畅通，以便及时获取最新信息。
 
-        # 在面试中，我们希望有机会能更深入地了解你，听听你对网络安全的热爱与见解。无论你对Web安全、二进制安全还是其他方向感兴趣，我们都鼓励你勇敢展示自己，分享你的思考。
 
-        # CSA不仅是一个学习技术、共同进步的平台，更是一个充满活力、互帮互助的大家庭。我们期待与你携手，共同探索网络世界的无限可能，在CSA的大家庭中共同成长。
 
-        # 主要注意！ 招新报名表一旦提交不可修改或重复提交，如有任何疑问，请发送邮件至csa@zju.edu.cn
 
-        # 最后期待你的加入！连心为网，筑梦为安，让我们在新的一年里携手共进，共创辉煌！
         
         title = "浙江大学学生网络空间安全协会（ZJUCSA）招新报名成功通知"
 
@@ -224,7 +204,6 @@ def confirm_recruit(data: RecruitItem, db: Session = Depends(get_db)):
                 user_id=data.uid,
                 title=title,
                 description=description,
-                # link="https://csa.zju.edu.cn"
             )
             if success:
                 print(f"钉钉通知发送成功: {data.uid}")
@@ -244,7 +223,6 @@ async def upload_resume(
     resume_file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-    # 验证学号格式
     if not uid or not uid.isdigit() or len(uid) > 10:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="学号格式不正确")
     
@@ -255,7 +233,6 @@ async def upload_resume(
     if not resume_file.content_type == "application/pdf":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="只支持PDF格式文件")
     
-    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
     if resume_file.size and resume_file.size > MAX_FILE_SIZE:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="文件大小不能超过10MB")
     
@@ -313,12 +290,7 @@ class RecruitResponse(BaseModel):
 def show_recruit_list(
     page: int = 1, size: int = 8, name: str = None, uid: str = None, degree: str = None, grade: str = None, major_name: str = None, status: str = None, department: str = None, all: bool = False,
     db: Session = Depends(get_db),
-        # aid: str = Depends(get_current_admin),
 ):
-    # if not is_manager(db, aid):
-    #     raise HTTPException(
-    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-    #     )
     recruitments = db.query(Recruitment)
     if name:
         recruitments = recruitments.filter(Recruitment.name.like(f"%{name}%"))
@@ -331,38 +303,30 @@ def show_recruit_list(
     if major_name:
         recruitments = recruitments.filter(Recruitment.major_name.like(f"%{major_name}%"))
     if status and status != 'all':
-        # 根据新的状态进行筛选
         if status == '待面试':
-            # 面试状态不是first_round的
             recruitments = recruitments.filter(Recruitment.interview_status != 'first_round')
         elif status == '已通过一面':
-            # 面试状态是first_round但还没通过一面的
             recruitments = recruitments.filter(
                 Recruitment.interview_status == 'first_round',
                 Recruitment.first_round_passed == False
             )
         elif status == '已通过二面':
-            # 已通过一面但还没通过二面的
             recruitments = recruitments.filter(
                 Recruitment.first_round_passed == True,
                 Recruitment.second_round_passed == False
             )
         elif status == '待录取':
-            # 已通过二面但还没录取的
             recruitments = recruitments.filter(
                 Recruitment.second_round_passed == True,
                 Recruitment.is_admitted == False
             )
         elif status == '已录取':
-            # 已录取的
             recruitments = recruitments.filter(Recruitment.is_admitted == True)
     if department and department != 'all':
         recruitments = recruitments.filter(Recruitment.assigned_department == department)
     
-    # 获取总数
     total = recruitments.count()
     
-    # 如果请求全部数据，则不应用分页
     if not all:
         recruitments = recruitments.offset((page - 1) * size).limit(size)
     
@@ -403,19 +367,15 @@ class EvaluationAdd(BaseModel):
     uid: str
     comment: str
     department: str = ""
-    # 评分项目（1-10分）
     technical_skills: Optional[float] = None
     communication_skills: Optional[float] = None
     problem_solving: Optional[float] = None
     teamwork: Optional[float] = None
     learning_ability: Optional[float] = None
     motivation: Optional[float] = None
-    # 总体评价
     strengths: Optional[str] = None
     weaknesses: Optional[str] = None
-    # 评价结果
     result: Optional[str] = "pending"
-    # 推荐部门
     recommended_department: Optional[str] = None
 
 
@@ -436,7 +396,6 @@ def add_evaluation(
             status_code=status.HTTP_404_NOT_FOUND, detail="纳新者未找到"
         )
     
-    # 获取评价人信息
     admin = db.query(Admin).filter(Admin.aid == int(aid)).first()
     if admin and admin.uid:
         user = db.query(User).filter(User.uid == admin.uid).first()
@@ -451,23 +410,18 @@ def add_evaluation(
             evaluator_name=evaluator_name,
             evaluation_comment=data.comment,
             department=data.department,
-            # 评分项目
             technical_skills=data.technical_skills,
             communication_skills=data.communication_skills,
             problem_solving=data.problem_solving,
             teamwork=data.teamwork,
             learning_ability=data.learning_ability,
             motivation=data.motivation,
-            # 总体评价
             strengths=data.strengths,
             weaknesses=data.weaknesses,
-            # 评价结果
             result=data.result,
-            # 推荐部门
             recommended_department=data.recommended_department
         )
         
-        # 计算总体评分
         overall_score = new_evaluation.calculate_overall_score()
         if overall_score is not None:
             new_evaluation.overall_score = overall_score
@@ -493,12 +447,7 @@ class EvaluationListResponse(BaseModel):
 def get_evaluations(
     uid: str,
     db: Session = Depends(get_db),
-    # aid: str = Depends(get_current_admin),
 ):
-    # if not is_manager(db, aid):
-    #     raise HTTPException(
-    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-    #     )
     
     evaluations = db.query(Evaluation).filter(Evaluation.uid == uid).order_by(Evaluation.evaluation_time.desc()).all()
     
@@ -510,21 +459,16 @@ def get_evaluations(
             "evaluation_comment": eval.evaluation_comment,
             "evaluation_time": eval.evaluation_time.strftime("%Y-%m-%d %H:%M:%S"),
             "department": eval.department,
-            # 评分项目
             "technical_skills": eval.technical_skills,
             "communication_skills": eval.communication_skills,
             "problem_solving": eval.problem_solving,
             "teamwork": eval.teamwork,
             "learning_ability": eval.learning_ability,
             "motivation": eval.motivation,
-            # 总体评分
             "overall_score": eval.overall_score,
-            # 总体评价
             "strengths": eval.strengths,
             "weaknesses": eval.weaknesses,
-            # 评价结果
             "result": eval.result,
-            # 推荐部门
             "recommended_department": eval.recommended_department
         })
     
@@ -535,34 +479,24 @@ def get_evaluations(
 
 class InterviewPassRequest(BaseModel):
     uid: str
-    round_type: str  # 'first_round' 或 'second_round'
 
 
 @router.post("/interview-pass", tags=["recruit"])
 def interview_pass(
     request: InterviewPassRequest,
     db: Session = Depends(get_db),
-    # aid: str = Depends(get_current_admin),
 ):
-    """面试通过处理（纳新管理页面）"""
-    # if not is_manager(db, aid):
-    #     raise HTTPException(
-    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-    #     )
+    """Interview pass handling (recruitment management page)"""
     
     try:
-        # 查找纳新者
         recruit = db.query(Recruitment).filter(Recruitment.uid == request.uid).first()
         if not recruit:
             raise HTTPException(status_code=404, detail="纳新者不存在")
         
         if request.round_type == 'first_round':
-            # 一面通过
             recruit.first_round_passed = True
-            recruit.interview_status = 'second_round'  # 进入二面
-            recruit.interview_completed = False  # 重置为未完成状态，准备二面
-            
-            # 发送一面通过通知
+            recruit.interview_status = 'second_round'
+            recruit.interview_completed = False
             title = "浙江大学学生网络空间安全协会（ZJUCSA）第一轮面试通过"
             description = f"""亲爱的 {recruit.name} 同学！
 
@@ -593,12 +527,11 @@ def interview_pass(
 浙江大学学生网络空间安全协会（ZJUCSA）"""
             
         elif request.round_type == 'second_round':
-            # 二面通过
             recruit.second_round_passed = True
-            recruit.interview_status = 'completed'  # 面试完成
-            recruit.interview_completed = True  # 面试完成
+            recruit.interview_status = 'completed'  
+            recruit.interview_completed = True  
             
-            # 发送二面通过通知
+            
             title = "浙江大学学生网络空间安全协会（ZJUCSA）第二轮面试通过"
             description = f"""亲爱的 {recruit.name} 同学！
 
@@ -627,7 +560,6 @@ def interview_pass(
 连心为网，筑梦为安！
 浙江大学学生网络空间安全协会（ZJUCSA）"""
         
-        # 发送钉钉通知
         try:
             success = send_dingtalk_message_to_user(
                 user_id=recruit.uid,
@@ -663,14 +595,7 @@ def interview_pass(
 def get_recruit_detail(
     uid: str,
     db: Session = Depends(get_db),
-    # aid: str = Depends(get_current_admin),
 ):
-    # """获取纳新者详细信息（包含面试通过状态）"""
-    # if not is_manager(db, aid):
-    #     raise HTTPException(
-    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-    #     )
-    
     recruit = db.query(Recruitment).filter(Recruitment.uid == uid).first()
     if not recruit:
         raise HTTPException(
@@ -715,7 +640,6 @@ class FinalAcceptRequest(BaseModel):
 def final_accept(
     request: FinalAcceptRequest,
     db: Session = Depends(get_db),
-    # aid: str = Depends(get_current_admin),
 ):
     vx_number = {
         'office' : 's1764958267',
@@ -723,18 +647,11 @@ def final_accept(
         'research' : 'king_back123',
         'activity' : 'JXCzszszs'
     }
-    """最终录取并发送钉钉通知"""
-    # if not is_manager(db, aid):
-    #     raise HTTPException(
-    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-    #     )
-    
     try:
         recruit = db.query(Recruitment).filter(Recruitment.uid == request.uid).first()
         if not recruit:
             raise HTTPException(status_code=404, detail="纳新者不存在")
         
-        # 检查前置条件
         if not recruit.first_round_passed:
             raise HTTPException(status_code=400, detail="必须先通过一面")
         
@@ -744,16 +661,13 @@ def final_accept(
         if not request.department:
             raise HTTPException(status_code=400, detail="必须先分配部门")
         
-        # 更新状态为录取
         recruit.is_admitted = True
         recruit.evaluation_status = 'accepted'
         recruit.admission_time = datetime.utcnow()
         recruit.assigned_department = request.department
         
-        # 创建干事记录（数据迁移）
         from models.member import Member
         
-        # 检查是否已存在干事记录
         existing_member = db.query(Member).filter(Member.uid == recruit.uid).first()
 
         if not existing_member:
@@ -777,7 +691,6 @@ def final_accept(
         
         db.commit()
         
-        # 发送钉钉录取通知
         department_labels = {
             'office': '办公室部',
             'competition': '竞赛部', 
@@ -836,52 +749,37 @@ def final_accept(
             detail=f"录取操作失败: {str(e)}"
         )
 
-# 最终拒绝API
 @router.post("/final-reject", tags=["recruit"])
 def final_reject_candidate(
     request: FinalAcceptRequest,
     db: Session = Depends(get_db),
-    # aid: str = Depends(get_current_admin),
 ):
-    """最终拒绝候选人"""
     try:
-        # 查找纳新者
         recruit = db.query(Recruitment).filter(Recruitment.uid == request.uid).first()
         if not recruit:
             raise HTTPException(status_code=404, detail="纳新者不存在")
         
-        # 检查是否已经录取
         if recruit.is_admitted:
             raise HTTPException(status_code=400, detail="已录取的候选人不能拒绝")
         
-
-        
-        # 确定拒绝阶段和消息
         reject_stage = ""
         reject_message = ""
         
         if recruit.first_round_passed and not recruit.second_round_passed:
-            # 已通过一面，拒绝二面
             reject_stage = "二面"
             reject_message = f"很遗憾，您在第二轮面试中未能通过。感谢您对ZJUCSA的关注，希望您继续努力！"
         elif recruit.first_round_passed and recruit.second_round_passed:
-            # 已通过一面和二面，拒绝最终录取
             reject_stage = "最终录取"
             reject_message = f"很遗憾，您在最终录取阶段未能通过。感谢您对ZJUCSA的关注，希望您继续努力！"
         elif not recruit.first_round_passed:
-            # 未通过一面，拒绝一面
             reject_stage = "一面"
             reject_message = f"很遗憾，您在第一轮面试中未能通过。感谢您对ZJUCSA的关注，希望您继续努力！"
         else:
-            # 其他情况
             reject_stage = "面试"
             reject_message = f"很遗憾，您在面试中未能通过。感谢您对ZJUCSA的关注，希望您继续努力！"
         
-        # 更新状态为拒绝
         recruit.evaluation_status = "rejected"
         recruit.is_admitted = False
-        
-        # 发送钉钉通知
         try:
             title = "浙江大学学生网络空间安全协会（ZJUCSA）面试结果通知"
             
@@ -950,13 +848,7 @@ class DeleteRecruit(BaseModel):
 def assign_department(
     data: AssignDepartment,
     db: Session = Depends(get_db),
-    # aid: str = Depends(get_current_admin),
 ):
-    # if not is_manager(db, aid):
-    #     raise HTTPException(
-    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-    #     )
-    
     recruit = db.query(Recruitment).filter(Recruitment.uid == data.uid).first()
     if not recruit:
         raise HTTPException(
@@ -979,14 +871,7 @@ def assign_department(
 def delete_recruit(
     data: DeleteRecruit,
     db: Session = Depends(get_db),
-    # aid: str = Depends(get_current_admin),
 ):
-    """删除纳新记录"""
-    # if not is_manager(db, aid):
-    #     raise HTTPException(
-    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-    #     )
-    
     recruit = db.query(Recruitment).filter(Recruitment.uid == data.uid).first()
     if not recruit:
         raise HTTPException(
@@ -994,20 +879,16 @@ def delete_recruit(
         )
     
     try:
-        # 需要导入Interview模型
         from models.interview import Interview
         
-        # 先删除相关的面试记录
         interviews = db.query(Interview).filter(Interview.uid == data.uid).all()
         for interview in interviews:
             db.delete(interview)
         
-        # 删除相关的评价记录
         evaluations = db.query(Evaluation).filter(Evaluation.uid == data.uid).all()
         for evaluation in evaluations:
             db.delete(evaluation)
         
-        # 删除纳新记录
         db.delete(recruit)
         db.commit()
         
@@ -1023,31 +904,19 @@ def delete_recruit(
 @router.post("/delete_all_recruits", tags=["admin"])
 def delete_all_recruits(
     db: Session = Depends(get_db),
-    # aid: str = Depends(get_current_admin),
 ):
-    """删除所有纳新记录"""
-    # if not is_manager(db, aid):
-    #     raise HTTPException(
-    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-    #     )
-    
     try:
-        # 获取所有纳新记录数量
         total_recruits = db.query(Recruitment).count()
         
         if total_recruits == 0:
             return {"message": "没有纳新记录需要删除", "deleted_count": 0}
         
-        # 需要导入Interview模型
         from models.interview import Interview
         
-        # 先删除所有相关的面试记录
         interviews_deleted = db.query(Interview).delete()
         
-        # 删除所有相关的评价记录
         evaluations_deleted = db.query(Evaluation).delete()
         
-        # 删除所有纳新记录
         recruits_deleted = db.query(Recruitment).delete()
         
         db.commit()
@@ -1071,7 +940,6 @@ from urllib.parse import quote
 @router.get("/export_recruits", tags=["admin"])
 def export_recruits(
     db: Session = Depends(get_db),
-    # aid: str = Depends(get_current_admin),
     include_basic_info: str = "true",
     include_contact: str = "true",
     include_department_preference: str = "true",
@@ -1079,21 +947,13 @@ def export_recruits(
     include_evaluation: str = "true",
     export_format: str = "excel"
 ):
-    """导出纳新者数据为Excel文件"""
-    # if not is_manager(db, aid):
-    #     raise HTTPException(
-    #         status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
-    #     )
-    
     try:
-        # 转换字符串参数为布尔值
         include_basic_info_bool = include_basic_info.lower() == "true"
         include_contact_bool = include_contact.lower() == "true"
         include_department_preference_bool = include_department_preference.lower() == "true"
         include_introduction_bool = include_introduction.lower() == "true"
         include_evaluation_bool = include_evaluation.lower() == "true"
         
-        # 获取所有纳新者数据
         recruitments = db.query(Recruitment).all()
         
         if not recruitments:
@@ -1176,7 +1036,6 @@ def export_recruits(
         
         df = pd.DataFrame(data)
 
-        # 核心改动：对文件名进行URL编码
         filename_base = "纳新者数据"
         filename_encoded = quote(filename_base)
         
@@ -1185,7 +1044,6 @@ def export_recruits(
             df.to_csv(output, index=False, encoding='utf-8-sig')
             output.seek(0)
             
-            # 使用编码后的文件名
             headers = {
                 "Content-Disposition": f"attachment; filename*=UTF-8''{filename_encoded}.csv"
             }
@@ -1215,7 +1073,6 @@ def export_recruits(
                 
                 output.seek(0)
                 
-                # 使用编码后的文件名
                 headers = {
                     "Content-Disposition": f"attachment; filename*=UTF-8''{filename_encoded}.xlsx"
                 }
@@ -1225,7 +1082,6 @@ def export_recruits(
                     headers=headers
                 )
             except ImportError:
-                # 如果没有安装 openpyxl，回退到 CSV 格式
                 output = BytesIO()
                 df.to_csv(output, index=False, encoding='utf-8-sig')
                 output.seek(0)

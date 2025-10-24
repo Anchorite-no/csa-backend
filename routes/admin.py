@@ -25,7 +25,7 @@ router = APIRouter()
 
 
 class AdminAuthorization(BaseModel):
-    # aid_author: Annotated[str, Field(pattern=r'^\d+$')]
+    
     uid_authored: Annotated[str, Field(pattern=r"^\d+$")]
     rid_authored: int
 
@@ -51,7 +51,7 @@ class UserRoleUpdate(BaseModel):
 
 
 class UserDelete(BaseModel):
-    uid: Annotated[str, Field(pattern=r"^\d+$")]  # 用户 ID
+    uid: Annotated[str, Field(pattern=r"^\d+$")]  
 
 
 def is_manager(db: Session, aid: str) -> bool:

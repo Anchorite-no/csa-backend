@@ -81,7 +81,7 @@ class WxUserLogin(BaseModel):
 
 class AdminLogin(BaseModel):
     uid: Annotated[str, Field(pattern=r"^\d+$")]
-    # aid: Annotated[str, Field(pattern=r'^\d+$')]
+    
     passwd: Annotated[
         str, Field(min_length=64, max_length=64, pattern=r"^[a-zA-Z0-9_-]+$")
     ]
@@ -131,7 +131,7 @@ def login(
 
 @router.post("/wxlogin", response_model=UserToken, tags=["user"])
 def wxlogin(data: WxUserLogin, db: Session = Depends(get_db)):
-    # submit code to miniapp
+    
     miniapp_url = "https://api.weixin.qq.com/sns/jscode2session"
     miniapp_params = {
         "appid": get_config("WEIXIN_APP_ID"),

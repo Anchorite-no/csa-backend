@@ -34,7 +34,7 @@ class DingTalkSingleMessageRequest(BaseModel):
 
 @router.get("/config")
 def get_config(
-    # current_admin: int = Depends(get_current_admin)
+    
 ):
     """获取钉钉配置"""
     config = get_dingtalk_config()
@@ -49,7 +49,7 @@ def get_config(
 
 @router.put("/config")
 def update_config(config_data: DingTalkConfigRequest,
-    # current_admin: int = Depends(get_current_admin)
+    
 ):
     """更新钉钉配置"""
     try:
@@ -69,7 +69,7 @@ def update_config(config_data: DingTalkConfigRequest,
 
 @router.post("/send_message")
 def send_message(message_data: DingTalkMessageRequest,
-    # current_admin: int = Depends(get_current_admin)
+    
 ):
     """发送钉钉消息给多个用户"""
     try:
@@ -94,7 +94,7 @@ def send_message(message_data: DingTalkMessageRequest,
 
 @router.post("/send_single_message")
 def send_single_message(message_data: DingTalkSingleMessageRequest,
-    # current_admin: int = Depends(get_current_admin)
+    
 ):
     """发送钉钉消息给单个用户"""
     try:
@@ -119,7 +119,7 @@ def send_single_message(message_data: DingTalkSingleMessageRequest,
 
 @router.post("/test_connection")
 def test_connection(
-    # current_admin: int = Depends(get_current_admin)
+    
 ):
     """测试钉钉连接"""
     try:
@@ -130,7 +130,6 @@ def test_connection(
         if not config.enabled:
             return {"message": "钉钉功能已禁用", "success": False}
         
-        # 发送测试消息给管理员
         success = send_dingtalk_message_to_user(
             user_id="0010449",  
             title="CSA系统钉钉连接测试",

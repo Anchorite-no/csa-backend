@@ -27,33 +27,28 @@ def init_app_routes(app: FastAPI):
         news_router,
         prefix="/api/news",
         tags=["news"],
-        # dependencies=[Depends(login_required)]
     )
     app.include_router(
         event_router,
         prefix="/api/event",
         tags=["event"],
-        # dependencies=[Depends(login_required)]
     )
     app.include_router(
         user_router,
         prefix="/api/user",
         tags=["user"],
-        # dependencies=[Depends(login_required)],
     )
     
     app.include_router(
         register_router,
         prefix="/api/register",
         tags=["register"],
-        # dependencies=[Depends(login_required)],
     )
     
     app.include_router(
         recruit_router,
         prefix="/api/recruit",
         tags=["recruit"],
-        # dependencies=[Depends(login_required)],
     )
 
 

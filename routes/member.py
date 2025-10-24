@@ -11,7 +11,7 @@ from models.recruit import Recruitment
 
 router = APIRouter()
 
-# Pydantic模型
+
 class MemberCreate(BaseModel):
     uid: str
     name: str
@@ -85,7 +85,6 @@ class MemberResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-# 获取干事列表
 @router.get("/members", tags=["member"])
 def get_members(
     department: Optional[str] = None,
@@ -98,19 +97,15 @@ def get_members(
     """获取干事列表"""
     query = db.query(Member)
     
-    # 应用筛选条件
     if department:
         query = query.filter(Member.department == department)
     if is_active is not None:
         query = query.filter(Member.is_active == is_active)
     
-    # 获取总数
     total = query.count()
     
-    # 应用分页
     members = query.offset((page - 1) * size).limit(size).all()
     
-    # 构建响应数据
     result_list = []
     for member in members:
         result_list.append(MemberResponse(
@@ -148,7 +143,6 @@ def get_members(
         "size": size
     }
 
-# 获取干事详情
 @router.get("/members/{uid}", tags=["member"])
 def get_member_detail(
     uid: str,
@@ -188,20 +182,17 @@ def get_member_detail(
         updated_at=member.updated_at
     )
 
-# 创建干事（从纳新者迁移）
 @router.post("/members", tags=["member"])
 def create_member(
     data: MemberCreate,
     db: Session = Depends(get_db),
-    # aid: str = Depends(get_current_admin),
+    
 ):
     """创建干事（从纳新者迁移）"""
-    # 检查是否已存在
     existing_member = db.query(Member).filter(Member.uid == data.uid).first()
     if existing_member:
         raise HTTPException(status_code=400, detail="该干事已存在")
     
-    # 创建干事记录
     member = Member(
         uid=data.uid,
         name=data.name,
@@ -235,20 +226,18 @@ def create_member(
         db.rollback()
         raise HTTPException(status_code=500, detail=f"创建干事失败: {str(e)}")
 
-# 更新干事信息
 @router.put("/members/{uid}", tags=["member"])
 def update_member(
     uid: str,
     data: MemberUpdate,
     db: Session = Depends(get_db),
-    # aid: str = Depends(get_current_admin),
+    
 ):
     """更新干事信息"""
     member = db.query(Member).filter(Member.uid == uid).first()
     if not member:
         raise HTTPException(status_code=404, detail="干事不存在")
     
-    # 更新字段
     update_data = data.dict(exclude_unset=True)
     for field, value in update_data.items():
         setattr(member, field, value)
@@ -264,12 +253,11 @@ def update_member(
         db.rollback()
         raise HTTPException(status_code=500, detail=f"更新干事信息失败: {str(e)}")
 
-# 删除干事
 @router.delete("/members/{uid}", tags=["member"])
 def delete_member(
     uid: str,
     db: Session = Depends(get_db),
-    # aid: str = Depends(get_current_admin),
+    
 ):
     """删除干事"""
     member = db.query(Member).filter(Member.uid == uid).first()
@@ -285,14 +273,12 @@ def delete_member(
         db.rollback()
         raise HTTPException(status_code=500, detail=f"删除干事失败: {str(e)}")
 
-# 获取部门统计
 @router.get("/members/stats", tags=["member"])
 def get_member_stats(
     db: Session = Depends(get_db),
-    # aid: str = Depends(get_current_admin),
+    
 ):
     """获取干事统计信息"""
-    # 按部门统计
     department_stats = {}
     departments = ['office', 'competition', 'research', 'activity']
     
@@ -309,7 +295,6 @@ def get_member_stats(
             "inactive": total - active
         }
     
-    # 总体统计
     total_members = db.query(Member).count()
     active_members = db.query(Member).filter(Member.is_active == True).count()
     

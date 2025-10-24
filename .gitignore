@@ -170,3 +170,5 @@ test/data.sqlite
 
 uploads/resumes/*
 uploads/images/*
+
+test/*

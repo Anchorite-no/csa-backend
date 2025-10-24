@@ -44,7 +44,6 @@ def edit_news(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="新闻未找到"
             )
-        # 保存旧内容用于图片清理
         old_content = news.content or ""
         old_image = news.image or ""
     else:
@@ -65,7 +64,6 @@ def edit_news(
 
         db.commit()
         
-        # 如果是编辑操作，清理不再使用的图片
         if data.nid:
             deleted_count = cleanup_unused_images(
                 old_content=old_content,
@@ -149,10 +147,10 @@ def edit_event(
     db: Session = Depends(get_db),
     aid: str = Depends(get_current_admin),
 ):
-    # if not is_manager(db, aid):
-    #     raise HTTPException(
-    #         status_code=status.HTTP_403_FORBIDDEN,
-    #         detail="当前用户没有权限进行此操作"
+    
+    
+    
+    
     #     )
     first_publish = 0
 
@@ -165,7 +163,6 @@ def edit_event(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="活动未找到"
             )
-        # 保存旧内容用于图片清理
         old_content = event.description or ""
         old_image = event.image or ""
     else:
@@ -191,7 +188,6 @@ def edit_event(
 
         db.commit()
         
-        # 如果是编辑操作，清理不再使用的图片
         if data.eid:
             deleted_count = cleanup_unused_images(
                 old_content=old_content,
