@@ -36,7 +36,7 @@ def delete_news(
     if not news:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="新闻未找到"
+            detail="News not found"
         )
 
     content = news.content or ""
@@ -48,7 +48,7 @@ def delete_news(
         
         deleted_count = cleanup_all_images(content, image)
         if deleted_count > 0:
-            print(f"删除新闻时清理了 {deleted_count} 个图片文件")
+            print(f"Cleaned up {deleted_count} image files when deleting news")
             
     except Exception as e:
         db.rollback()
@@ -69,14 +69,14 @@ def delete_event(
     if not is_manager(db, aid):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="当前管理员没有权限进行此操作"
+            detail="Current administrator does not have permission to perform this operation"
         )
 
     event_category = db.query(EventCategory).filter_by(ecid=data.ecid).first()
     if not event_category:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="活动类型未找到"
+            detail="Event category not found"
         )
 
     try:
@@ -86,7 +86,7 @@ def delete_event(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"删除活动类型时发生错误: {e}"
+            detail=f"Error occurred when deleting event category: {e}"
         )
 
     return None
@@ -109,7 +109,7 @@ def delete_event(
     if not event:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="活动未找到"
+            detail="Event not found"
         )
 
     content = event.description or ""
@@ -121,13 +121,13 @@ def delete_event(
         
         deleted_count = cleanup_all_images(content, image)
         if deleted_count > 0:
-            print(f"删除活动时清理了 {deleted_count} 个图片文件")
+            print(f"Cleaned up {deleted_count} image files when deleting event")
             
     except Exception as e:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"删除活动时发生错误: {e}"
+            detail=f"An error occurred when deleting event: {e}"
         )
 
     return None

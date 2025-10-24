@@ -47,7 +47,7 @@ def parse_time_slots(time_slots_json: str) -> List[str]:
         else:
             return []
     except (json.JSONDecodeError, TypeError, ValueError) as e:
-        print(f"解析面试时间段失败: {e}, 原始数据: {time_slots_json}")
+        print(f"Failed to parse interview time slots: {e}, raw data: {time_slots_json}")
         return []
 
 
@@ -94,12 +94,11 @@ def calculate_slot_date(base_date: str, time_slot: str, week_offset: int = 0) ->
         return datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S")
         
     except Exception as e:
-        print(f"计算面试日期失败: {e}, 基准日期: {base_date}, 时间段: {time_slot}")
+        print(f"Failed to calculate interview date: {e}, base date: {base_date}, time slot: {time_slot}")
         return datetime.strptime(base_date, "%Y-%m-%d")
 
 
 def get_available_dates_for_slot(base_date: str, time_slot: str, num_weeks: int = 2) -> List[datetime]:
-    """获取时间段在多个周内的可用日期"""
     dates = []
     for week in range(num_weeks):
         date = calculate_slot_date(base_date, time_slot, week)
@@ -108,13 +107,6 @@ def get_available_dates_for_slot(base_date: str, time_slot: str, num_weeks: int 
 
 
 def auto_schedule_algorithm(candidates: List[Recruitment], base_date: str, max_per_slot: int = 8) -> Dict[str, Any]:
-    """
-    自动排班算法 - 四阶段算法
-    1. 第一轮：贪心算法，选择最早且人数不多于7的时间段
-    2. 第二轮：负载均衡，将人数大于5的时间段中的人员重新分配
-    3. 第三轮：多轮迭代聚类，优化人数小于4的时间段
-    4. 第四轮：重新分配，将人数少于4的时间段中的人员分配到其他人数不多于7的时间段
-    """
     if not candidates:
         return {
             'allocations': {},
@@ -131,15 +123,15 @@ def auto_schedule_algorithm(candidates: List[Recruitment], base_date: str, max_p
         raise ValueError(f"无效的基准日期格式: {base_date}")
     
     
-    time_slot_instances = {}  # 存储每个时间段的多个实例
-    time_slot_counts = defaultdict(int)  # 每个时间槽的当前人数
+    time_slot_instances = {}  
+    time_slot_counts = defaultdict(int)  
     
     all_time_slots = set()
     valid_candidates = []
     
     for candidate in candidates:
         time_slots = parse_time_slots(candidate.interview_time_slots)
-        if time_slots:  # 只处理有时间段偏好的面试者
+        if time_slots: 
             valid_candidates.append(candidate)
             for slot in time_slots:
                 all_time_slots.add(slot)
@@ -169,8 +161,8 @@ def auto_schedule_algorithm(candidates: List[Recruitment], base_date: str, max_p
         time_slot_instances[slot] = slot_instances
     
     
-    allocations = defaultdict(list)  # 按时间槽键分配
-    candidate_to_slot = {}  # 记录每个候选人的分配情况
+    allocations = defaultdict(list) 
+    candidate_to_slot = {} 
     unscheduled = []
     
     candidates_with_preferences = []
@@ -492,16 +484,11 @@ def create_interview_schedule(
     db: Session = Depends(get_db),
     
 ):
-    """创建面试排班"""
-    
-    
-    
-    #     )
     
     recruit = db.query(Recruitment).filter(Recruitment.uid == schedule_data.uid).first()
     if not recruit:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="纳新记录未找到"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment record not found"
         )
     
     try:
@@ -521,7 +508,7 @@ def create_interview_schedule(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"创建面试排班时发生错误: {e}"
+            detail=f"Error occurred when creating interview schedule: {e}"
         )
 
 
@@ -531,12 +518,6 @@ def auto_schedule_interviews(
     db: Session = Depends(get_db),
     
 ):
-    """一键自动排班"""
-    
-    
-    
-    #     )
-    
     try:
         
         candidates = db.query(Recruitment).filter(
@@ -545,7 +526,7 @@ def auto_schedule_interviews(
             Recruitment.interview_status.in_(["first_round", "second_round"])  # 排班一面和二面的
         ).all()
         
-        print(f"找到 {len(candidates)} 个可排班的面试者")
+        print(f"Found {len(candidates)} candidates available for scheduling")
         
         if not candidates:
             return AutoScheduleResponse(
@@ -566,7 +547,7 @@ def auto_schedule_interviews(
         )
         print(algorithm_result['schedule_results'])
         
-        print(f"算法结果: 成功排班 {len(algorithm_result['schedule_results'])} 人，未排班 {len(algorithm_result['unscheduled'])} 人")
+        print(f"Algorithm result: Successfully scheduled {len(algorithm_result['schedule_results'])} people, unscheduled {len(algorithm_result['unscheduled'])} people")
         
         
         created_schedules = []
@@ -576,7 +557,7 @@ def auto_schedule_interviews(
             ).first()
             
             if existing_schedule:
-                print(f"跳过已存在的排班: {schedule_info['uid']}")
+                print(f"Skipping existing schedule: {schedule_info['uid']}")
                 continue  # 跳过已存在的排班
             
             recruit = db.query(Recruitment).filter(Recruitment.uid == schedule_info['uid']).first()
@@ -633,7 +614,7 @@ def auto_schedule_interviews(
         
         
         db.commit()
-        print(f"成功创建 {len(created_schedules)} 个面试排班记录")
+        print(f"Successfully created {len(created_schedules)} interview schedule records")
         
         
         total_candidates = len(candidates)
@@ -680,10 +661,10 @@ def auto_schedule_interviews(
         
     except Exception as e:
         db.rollback()
-        print(f"自动排班失败: {e}")
+        print(f"Auto scheduling failed: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"自动排班时发生错误: {e}"
+            detail=f"Error occurred during auto scheduling: {e}"
         )
 
 
@@ -692,11 +673,6 @@ def get_schedule_statistics(
     db: Session = Depends(get_db),
     
 ):
-    """获取排班统计信息"""
-    
-    
-    
-    #     )
     
     try:
         total_recruits = db.query(Recruitment).count()
@@ -751,7 +727,7 @@ def get_schedule_statistics(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"获取排班统计时发生错误: {e}"
+            detail=f"Error occurred when getting schedule statistics: {e}"
         )
 
 
@@ -761,20 +737,11 @@ def get_interviews_by_uid(
     db: Session = Depends(get_db),
     
 ):
-    
-    
-    
-    #     )
-    
     interviews = db.query(Interview).filter(
         Interview.uid == uid
     ).order_by(Interview.stage, Interview.interview_date.desc()).all()
     
     return interviews
-
-
-
-
 
 @router.get("/schedule", tags=["interview"])
 def get_interview_schedules(
@@ -786,11 +753,6 @@ def get_interview_schedules(
     db: Session = Depends(get_db),
     
 ):
-    """获取面试排班列表"""
-    
-    
-    
-    #     )
     
     query = db.query(Interview)
     
@@ -838,16 +800,11 @@ def update_interview_schedule(
     db: Session = Depends(get_db),
     
 ):
-    """更新面试排班"""
-    
-    
-    
-    #     )
     
     schedule = db.query(Interview).filter(Interview.id == schedule_id).first()
     if not schedule:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="面试排班记录未找到"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Interview schedule record not found"
         )
     
     try:
@@ -866,7 +823,7 @@ def update_interview_schedule(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"更新面试排班时发生错误: {e}"
+            detail=f"Error occurred when updating interview schedule: {e}"
         )
 
 
@@ -876,16 +833,11 @@ def delete_interview_schedule(
     db: Session = Depends(get_db),
     
 ):
-    """删除面试排班"""
-    
-    
-    
-    #     )
     
     schedule = db.query(Interview).filter(Interview.id == schedule_id).first()
     if not schedule:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="面试排班记录未找到"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Interview schedule record not found"
         )
     
     try:
@@ -898,7 +850,7 @@ def delete_interview_schedule(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"删除面试排班时发生错误: {e}"
+            detail=f"Error occurred when deleting interview schedule: {e}"
         )
 
 
@@ -908,17 +860,12 @@ def get_recruit_time_slots(
     db: Session = Depends(get_db),
     
 ):
-    """获取纳新者的面试时间段信息"""
-    
-    
-    
-    #     )
     
     try:
         recruit = db.query(Recruitment).filter(Recruitment.uid == uid).first()
         if not recruit:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="纳新记录未找到"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment record not found"
             )
         
         time_slots = []
@@ -938,12 +885,11 @@ def get_recruit_time_slots(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"获取面试时间段信息时发生错误: {e}"
+            detail=f"Error occurred when getting interview time slot information: {e}"
         )
 
 
 def format_time_slots(time_slots):
-    """格式化时间段显示"""
     if not time_slots:
         return []
     
@@ -966,17 +912,12 @@ def get_recruit_info(
     db: Session = Depends(get_db),
     
 ):
-    """获取纳新者基本信息"""
-    
-    
-    
-    #     )
     
     try:
         recruit = db.query(Recruitment).filter(Recruitment.uid == uid).first()
         if not recruit:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="纳新记录未找到"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment record not found"
             )
         
         return {
@@ -999,7 +940,7 @@ def get_recruit_info(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"获取纳新者信息时发生错误: {e}"
+            detail=f"Error occurred when getting recruit information: {e}"
         )
 
 
@@ -1008,10 +949,6 @@ def get_schedule_statistics(
     db: Session = Depends(get_db),
     
 ):
-    
-    
-    
-    #     )
     
     try:
         screening_count = db.query(Interview).filter(Interview.stage == "screening").count()
@@ -1045,7 +982,7 @@ def get_schedule_statistics(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"获取面试排班统计信息时发生错误: {e}"
+            detail=f"Error occurred when getting interview schedule statistics: {e}"
         )
 
 
@@ -1060,11 +997,6 @@ def batch_update_interviews(
     db: Session = Depends(get_db),
     
 ):
-    """批量更新面试结果"""
-    
-    
-    
-    #     )
     
     try:
         for interview_id in data.interview_ids:
@@ -1080,7 +1012,7 @@ def batch_update_interviews(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"批量更新面试记录时发生错误: {e}"
+            detail=f"Error occurred when batch updating interview records: {e}"
         )
 
 
@@ -1095,23 +1027,18 @@ def send_schedule_notification(
     db: Session = Depends(get_db),
     
 ):
-    """发送面试排班通知"""
-    
-    
-    
-    #     )
     
     try:
         schedule = db.query(Interview).filter(Interview.id == notification_data.schedule_id).first()
         if not schedule:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="面试排班记录未找到"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Interview schedule record not found"
             )
         
         recruit = db.query(Recruitment).filter(Recruitment.uid == schedule.uid).first()
         if not recruit:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="纳新记录未找到"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment record not found"
             )
         
         stage_labels = {
@@ -1155,92 +1082,10 @@ def send_schedule_notification(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"发送面试通知时发生错误: {e}"
+            detail=f"Error occurred when sending interview notification: {e}"
         )
 
-
-
-
-
-
-
-
-
-
-#     #     )
-    
-
-
-        
-
-
-
-
-        
-
-
-
-        
-
-
-
-        
-
-
-
-        
-
-
-
-        
-
-
-
-
-        
-
-
-        
-
-
-
-
-
-
-
-
-#             },
-
-
-
-#             },
-
-#                 {
-
-
-
-
-
-#             ],
-
-#                 {
-
-
-
-
-
-#             ]
-#         }
-        
-
-
-
-
-#         )
-
-
 def generate_schedule_csv(schedule_results: List[Dict[str, Any]], base_date: str) -> str:
-    """生成面试排班CSV文件"""
     
     uploads_dir = "uploads"
     if not os.path.exists(uploads_dir):
@@ -1297,11 +1142,6 @@ def get_interview_time_slots(
     db: Session = Depends(get_db),
     
 ):
-    """获取所有已排班的面试时间段"""
-    
-    
-    
-    #     )
     
     try:
         if base_date:
@@ -1400,7 +1240,7 @@ def get_interview_time_slots(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"获取面试时间段时发生错误: {e}"
+            detail=f"Error occurred when getting interview time slots: {e}"
         )
 
 
@@ -1410,17 +1250,11 @@ def download_schedule_csv(
     db: Session = Depends(get_db),
     
 ):
-    """下载面试排班CSV文件"""
-    
-    
-    
-    #     )
-    
     file_path = os.path.join("uploads", filename)
     
     if not os.path.exists(file_path):
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="文件不存在"
+            status_code=status.HTTP_404_NOT_FOUND, detail="File not found"
         )
     
     return FileResponse(
@@ -1443,15 +1277,10 @@ def complete_interview(
     db: Session = Depends(get_db),
     
 ):
-    """完成指定时间段的面试，将所有面试者的状态改为已完成"""
-    
-    
-    
-    #     )
     
     try:
-        print(f"接收到的时间段: {request.time_slot}")
-        print(f"周数: {request.week}")
+        print(f"Received time slot: {request.time_slot}")
+        print(f"Week number: {request.week}")
         
         base_time_slot = request.time_slot
         if ' ' in base_time_slot:
@@ -1460,21 +1289,21 @@ def complete_interview(
                 
                 base_time_slot = f"{parts[0]} {parts[2]}"
         
-        print(f"处理后的基础时间段: {base_time_slot}")
+        print(f"Processed base time slot: {base_time_slot}")
         
         interviews = db.query(Interview).filter(
             Interview.stage.in_(['first_round', 'second_round'])
         ).all()
         
-        print(f"找到 {len(interviews)} 个面试记录")
-        print(f"目标时间段: {base_time_slot}")
-        print(f"目标周数: {request.week}")
+        print(f"Found {len(interviews)} interview records")
+        print(f"Target time slot: {base_time_slot}")
+        print(f"Target week number: {request.week}")
         
         target_interviews = []
         for interview in interviews:
             
             matched_slot = matchTimeSlotFromDate(interview.interview_date)
-            print(f"面试 {interview.uid}: 日期={interview.interview_date}, 匹配时间段={matched_slot}")
+            print(f"Interview {interview.uid}: date={interview.interview_date}, matched time slot={matched_slot}")
             
             if matched_slot == base_time_slot:
                 interview_date = interview.interview_date
@@ -1482,15 +1311,15 @@ def complete_interview(
                 days_diff = (interview_date.date() - base_date).days
                 interview_week = 1 if days_diff >= 7 else 0
                 
-                print(f"  周数检查: days_diff={days_diff}, interview_week={interview_week}")
+                print(f"  Week check: days_diff={days_diff}, interview_week={interview_week}")
                 
                 if interview_week == request.week:
                     target_interviews.append(interview)
-                    print(f"  匹配成功，添加到目标列表")
+                    print(f"  Match successful, added to target list")
                 else:
-                    print(f"  周数不匹配")
+                    print(f"  Week number mismatch")
             else:
-                print(f"  时间段不匹配")
+                print(f"  Time slot mismatch")
         
         for interview in target_interviews:
             recruit = db.query(Recruitment).filter(Recruitment.uid == interview.uid).first()
@@ -1534,11 +1363,11 @@ def complete_interview(
                         description=description
                     )
                     if success:
-                        print(f"面试完成通知发送成功: {recruit.uid}")
+                        print(f"Interview completion notification sent successfully: {recruit.uid}")
                     else:
-                        print(f"面试完成通知发送失败: {recruit.uid}")
+                        print(f"Interview completion notification failed: {recruit.uid}")
                 except Exception as e:
-                    print(f"发送面试完成通知时出错: {e}")
+                    print(f"Error sending interview completion notification: {e}")
         
         for interview in target_interviews:
             db.delete(interview)
@@ -1555,7 +1384,7 @@ def complete_interview(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"完成面试时发生错误: {e}"
+            detail=f"Error occurred when completing interview: {e}"
         )
 
 
@@ -1579,7 +1408,7 @@ def pass_interview(
     try:
         recruit = db.query(Recruitment).filter(Recruitment.uid == request.uid).first()
         if not recruit:
-            raise HTTPException(status_code=404, detail="纳新者不存在")
+            raise HTTPException(status_code=404, detail="Recruit not found")
         
         if request.round_type == 'first_round':
             recruit.first_round_passed = True
@@ -1620,7 +1449,7 @@ def pass_interview(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"面试通过处理时发生错误: {e}"
+            detail=f"Error occurred when processing interview pass: {e}"
         )
 
 

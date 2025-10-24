@@ -93,7 +93,7 @@ def get_event_detail(eid: str, db: Session = Depends(get_db)):
     event = db.query(Event).filter_by(eid=eid).first()
 
     if not event:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="活动未找到")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
 
     event = vars(event)
 
@@ -171,14 +171,14 @@ def sign_up(
 
     if not event:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="您报名的活动不存在"
+            status_code=status.HTTP_404_NOT_FOUND, detail="The event you registered for does not exist"
         )
 
     current_time = int(time.time())
 
     if current_time > event.end_signup_time:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="报名已截止"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Registration has closed"
         )
 
     try:
@@ -225,19 +225,19 @@ def sign_in(
     if not participation or not event:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="您签到的活动不存在，或者未成功报名",
+            detail="The event you are checking in does not exist, or you have not successfully registered",
         )
 
     current_time = int(time.time())
 
     if current_time > event.end_signin_time:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="签到已截止"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Check-in has closed"
         )
 
     if event.signin_code != data.signin_code:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="签到码错误"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect check-in code"
         )
 
     participation.signin_time = current_time

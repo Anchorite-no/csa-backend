@@ -152,7 +152,7 @@ def get_member_detail(
     """获取干事详情"""
     member = db.query(Member).filter(Member.uid == uid).first()
     if not member:
-        raise HTTPException(status_code=404, detail="干事不存在")
+        raise HTTPException(status_code=404, detail="Member not found")
     
     return MemberResponse(
         uid=member.uid,
@@ -191,7 +191,7 @@ def create_member(
     """创建干事（从纳新者迁移）"""
     existing_member = db.query(Member).filter(Member.uid == data.uid).first()
     if existing_member:
-        raise HTTPException(status_code=400, detail="该干事已存在")
+        raise HTTPException(status_code=400, detail="This member already exists")
     
     member = Member(
         uid=data.uid,
@@ -224,7 +224,7 @@ def create_member(
         return {"success": True, "message": "干事创建成功", "member": member}
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"创建干事失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create member: {str(e)}")
 
 @router.put("/members/{uid}", tags=["member"])
 def update_member(
@@ -236,7 +236,7 @@ def update_member(
     """更新干事信息"""
     member = db.query(Member).filter(Member.uid == uid).first()
     if not member:
-        raise HTTPException(status_code=404, detail="干事不存在")
+        raise HTTPException(status_code=404, detail="Member not found")
     
     update_data = data.dict(exclude_unset=True)
     for field, value in update_data.items():
@@ -251,7 +251,7 @@ def update_member(
         return {"success": True, "message": "干事信息更新成功"}
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"更新干事信息失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to update member information: {str(e)}")
 
 @router.delete("/members/{uid}", tags=["member"])
 def delete_member(
@@ -262,7 +262,7 @@ def delete_member(
     """删除干事"""
     member = db.query(Member).filter(Member.uid == uid).first()
     if not member:
-        raise HTTPException(status_code=404, detail="干事不存在")
+        raise HTTPException(status_code=404, detail="Member not found")
     
     try:
         db.delete(member)
@@ -271,7 +271,7 @@ def delete_member(
         return {"success": True, "message": "干事删除成功"}
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"删除干事失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete member: {str(e)}")
 
 @router.get("/members/stats", tags=["member"])
 def get_member_stats(

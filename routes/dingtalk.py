@@ -63,7 +63,7 @@ def update_config(config_data: DingTalkConfigRequest,
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"配置更新失败: {str(e)}"
+            detail=f"Configuration update failed: {str(e)}"
         )
 
 
@@ -88,7 +88,7 @@ def send_message(message_data: DingTalkMessageRequest,
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"消息发送失败: {str(e)}"
+            detail=f"Message sending failed: {str(e)}"
         )
 
 
@@ -113,7 +113,7 @@ def send_single_message(message_data: DingTalkSingleMessageRequest,
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"消息发送失败: {str(e)}"
+            detail=f"Message sending failed: {str(e)}"
         )
 
 
@@ -145,5 +145,5 @@ def test_connection(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"连接测试失败: {str(e)}"
+            detail=f"Connection test failed: {str(e)}"
         )

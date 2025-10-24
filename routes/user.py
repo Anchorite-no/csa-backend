@@ -100,23 +100,23 @@ def login(
     user = db.query(User).filter_by(uid=data.uid).first()
 
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="用户未找到")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     if not verify_passwd(data.passwd, user.passwd.encode("utf-8")):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="密码错误")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password")
 
     admin = db.query(Admin).filter_by(aid=data.uid).first()
 
     if not admin:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="管理员未找到",
+            detail="Administrator not found",
         )
 
     if not admin.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="该管理员账号未激活",
+            detail="This administrator account is not activated",
         )
 
     admin_token = create_access_token_admin(
@@ -149,12 +149,12 @@ def wxlogin(data: WxUserLogin, db: Session = Depends(get_db)):
     openid = miniapp_resp_json.get("openid")
 
     if not openid:
-        raise HTTPException(status_code=400, detail="微信登录错误")
+        raise HTTPException(status_code=400, detail="WeChat login error")
 
     user = db.query(User).filter_by(openid=openid).first()
 
     if not user:
-        raise HTTPException(status_code=404, detail="用户未找到")
+        raise HTTPException(status_code=404, detail="User not found")
 
     token = create_access_token(user.uid, timedelta(hours=2), nick=user.nick)
 
@@ -170,11 +170,11 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
 
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="用户未找到"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="User not found"
         )
 
     if not verify_passwd(data.passwd, user.passwd):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="密码错误")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password")
 
     token = create_access_token(user.uid, timedelta(hours=2), nick=user.nick)
 
@@ -190,11 +190,11 @@ def token(data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
 
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="用户未找到"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="User not found"
         )
 
     if not verify_passwd(sha256(data.password.encode()).hexdigest(), user.passwd):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="密码错误")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password")
 
     token = create_access_token(user.uid, timedelta(hours=2), nick=user.nick)
 
@@ -214,12 +214,12 @@ def passwd(
 
     if not verify_passwd(data.old, user.passwd):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="原密码错误"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect original password"
         )
 
     if data.old == data.new:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="新密码不能与旧密码相同"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="New password cannot be the same as old password"
         )
 
     user.passwd = hash_passwd(data.new)
@@ -264,7 +264,7 @@ def verify(data: UserID):
     if not data.uid:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="请检查学号",
+            detail="Please check student ID",
         )
     
     target = data.uid + "@zju.edu.cn"
@@ -277,7 +277,7 @@ def verify(data: UserID):
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"验证码发送失败",
+            detail=f"Verification code sending failed",
         )
     
     return {"msg": "success"}
@@ -310,19 +310,19 @@ def register(data: UserRegister, db: Session = Depends(get_db)):
     user = db.query(User).filter_by(uid=data.uid).first()
     if user:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="用户已存在"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="User already exists"
         )
 
     email = db.query(User).filter_by(email=data.email).first()
     if email:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="邮箱已被注册"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
         )
 
     existed = db.query(User).filter_by(openid=openid).first()
     if existed:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="该微信已被绑定"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="This WeChat is already bound"
         )
 
     token = get_config("CSA_SECRET_KEY")
@@ -333,7 +333,7 @@ def register(data: UserRegister, db: Session = Depends(get_db)):
 
     if verify_code != data.verify_code:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="验证码错误"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect verification code"
         )
 
     try:

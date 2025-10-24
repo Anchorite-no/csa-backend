@@ -71,7 +71,7 @@ def create_event_category(
     if not is_manager(db, aid):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="当前用户没有权限进行此操作"
+            detail="Current user does not have permission to perform this operation"
         )
 
     try:
@@ -80,7 +80,7 @@ def create_event_category(
         if existing_event_category is not None:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="该活动类型已经存在"
+                detail="This event category already exists"
             )
         else:
             new_event_category = EventCategory(description=data.description)
@@ -89,7 +89,7 @@ def create_event_category(
             return {"result": "Create EventCategory Successfully"}
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"创建活动类型时发生错误: {e}")
+        raise HTTPException(status_code=500, detail=f"Error occurred when creating event category: {e}")
 
 
 @router.post("/event")
@@ -102,7 +102,7 @@ def create_event(
     if not is_manager(db, aid):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="当前用户没有权限进行此操作"
+            detail="Current user does not have permission to perform this operation"
         )
     
     try:

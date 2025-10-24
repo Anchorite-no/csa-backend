@@ -16,20 +16,20 @@ async def get_image(name: str = Query(..., description="图片文件名或相对
         if not str(full_path.resolve()).startswith(str(IMAGES_DIR.resolve())):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="访问被拒绝"
+                detail="Access denied"
             )
         
         if not full_path.exists() or not full_path.is_file():
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="图片文件未找到"
+                detail="Image file not found"
             )
         
         allowed_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.svg'}
         if full_path.suffix.lower() not in allowed_extensions:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="不支持的文件类型"
+                detail="Unsupported file type"
             )
         
         return FileResponse(
@@ -43,5 +43,5 @@ async def get_image(name: str = Query(..., description="图片文件名或相对
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"获取图片时发生错误: {e}"
+            detail=f"Error occurred when getting image: {e}"
         )

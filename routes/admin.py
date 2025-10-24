@@ -69,13 +69,13 @@ def admin_authorization(
 ):
     if not is_manager(db, aid):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Current administrator does not have permission to perform this operation"
         )
     try:
         user = db.query(User).filter_by(uid=data.uid_authored).first()
         if not user:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="目标用户未找到"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Target user not found"
             )
 
         new_admin = Admin(
@@ -91,7 +91,7 @@ def admin_authorization(
             status_code=400, detail=f"An error occurred when authorizing user: {e}"
         )
 
-    return {"msg": "用户已成功授权为管理员"}
+    return {"msg": "User has been successfully authorized as an admin"}
 
 
 @router.post("/deauthor", tags=["admin"])
@@ -102,19 +102,19 @@ def admin_deauthorization(
 ):
     if not is_manager(db, aid):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Current administrator does not have permission to perform this operation"
         )
 
     user = db.query(User).filter_by(uid=data.uid_deauthored).first()
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="目标用户未找到"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Target user not found"
         )
     try:
         existing_admin = db.query(Admin).filter_by(uid=data.uid_deauthored).first()
         if not existing_admin:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="该用户不是管理员"
+                status_code=status.HTTP_404_NOT_FOUND, detail="This user is not an administrator"
             )
 
         if data.rid_deauthored:
@@ -140,7 +140,7 @@ def show_user_count(
 ):
     if not is_manager(db, aid):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Current administrator does not have permission to perform this operation"
         )
 
     user_count = db.query(User).count()
@@ -183,12 +183,12 @@ def delete_user(
 ):
     if not is_manager(db, aid):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Current administrator does not have permission to perform this operation"
         )
 
     user = db.query(User).filter_by(uid=data.uid).first()
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="用户未找到")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     try:
         admin = db.query(Admin).filter_by(uid=data.uid).first()
@@ -201,7 +201,7 @@ def delete_user(
 
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=400, detail=f"删除用户时发生错误: {e}")
+        raise HTTPException(status_code=400, detail=f"Error occurred when deleting user: {e}")
 
     return {"msg": "用户已成功删除"}
 
@@ -214,13 +214,13 @@ def update_user_role(
 ):
     if not is_manager(db, aid):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Current administrator does not have permission to perform this operation"
         )
 
     user = db.query(User).filter_by(uid=data.uid).first()
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="目标用户未找到"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Target user not found"
         )
 
     try:
@@ -229,7 +229,7 @@ def update_user_role(
 
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=400, detail=f"更改用户角色时发生错误: {e}")
+        raise HTTPException(status_code=400, detail=f"Error occurred when changing user role: {e}")
 
     return {"msg": "用户角色已成功更改"}
 

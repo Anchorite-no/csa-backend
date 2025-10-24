@@ -138,21 +138,21 @@ class RecruitItem(BaseModel):
 def confirm_recruit(data: RecruitItem, db: Session = Depends(get_db)):
     existing_recruit = db.query(Recruitment).filter(Recruitment.uid == data.uid).first()
     if existing_recruit:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="该学号已提交过报名信息")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This student ID has already submitted application information")
     
     if data.degree == 0:
         csv_file_path = f"major/specialties_data_20{data.grade}.csv"
         df = pd.read_csv(csv_file_path, dtype=str)
         
         if data.major_name not in df['major_name'].values:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="专业不存在")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Major does not exist")
         
         major_id = df[df['major_name'] == data.major_name]['major_id'].values[0]
         college_id = df[df['major_name'] == data.major_name]['college_id'].values[0]
         college_name = df[df['major_name'] == data.major_name]['college_name'].values[0]
         
         if data.major_id != major_id or data.college_id != college_id or data.college_name != college_name:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="专业或学院信息不匹配")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Major or college information does not match")
     else:
         major_id = data.major_id if data.major_id else "DEFAULT_MASTER_PHD"
         college_id = data.college_id if data.college_id else "DEFAULT_COLLEGE"
@@ -185,15 +185,6 @@ def confirm_recruit(data: RecruitItem, db: Session = Depends(get_db)):
     try:   
         db.add(new_recruit)
         db.commit()
-        
-
-
-
-
-
-
-
-        
         title = "浙江大学学生网络空间安全协会（ZJUCSA）招新报名成功通知"
 
         description = f"""亲爱的 {data.name} 同学！\n你已成功提交浙江大学学生网络空间安全协会（ZJUCSA）的招新报名申请。\n\n首先，衷心感谢你对CSA的关注与认可。我们非常期待能有更多像你一样对网络空间安全充满热情的同学加入我们，一同探索未知的技术领域。\n我们已经收到了你的申请，并会尽快进行筛选。面试安排将通过钉钉OA、短信或电话形式通知你，请务必保持手机畅通，以便及时获取最新信息。\n在面试中，我们希望有机会能更深入地了解你，听听你对网络安全的热爱与见解。无论你对Web安全、二进制安全还是其他方向感兴趣，我们都鼓励你勇敢展示自己，分享你的思考。\nCSA不仅是一个学习技术、共同进步的平台，更是一个充满活力、互帮互助的大家庭。我们期待与你携手，共同探索网络世界的无限可能，在CSA的大家庭中共同成长。\n注意！ 招新报名表一旦提交不可修改或重复提交，如有任何疑问，请发送邮件至csa@zju.edu.cn\n连心为网，筑梦为安，期待你的加入！
@@ -206,11 +197,11 @@ def confirm_recruit(data: RecruitItem, db: Session = Depends(get_db)):
                 description=description,
             )
             if success:
-                print(f"钉钉通知发送成功: {data.uid}")
+                print(f"DingTalk notification sent successfully: {data.uid}")
             else:
-                print(f"钉钉通知发送失败: {data.uid}")
+                print(f"DingTalk notification failed: {data.uid}")
         except Exception as e:
-            print(f"发送钉钉通知时出错: {e}")
+            print(f"Error sending DingTalk notification: {e}")
         
         return {"message": "Recruit information submitted successfully"}
     except Exception as e:
@@ -224,17 +215,17 @@ async def upload_resume(
     db: Session = Depends(get_db)
 ):
     if not uid or not uid.isdigit() or len(uid) > 10:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="学号格式不正确")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid student ID format")
     
     existing_recruit = db.query(Recruitment).filter(Recruitment.uid == uid).first()
     if not existing_recruit:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="请先提交报名信息")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Please submit application information first")
     
     if not resume_file.content_type == "application/pdf":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="只支持PDF格式文件")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only PDF format files are supported")
     
     if resume_file.size and resume_file.size > MAX_FILE_SIZE:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="文件大小不能超过10MB")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File size cannot exceed 10MB")
     
     try:
         file_hash = hashlib.sha256(uid.encode()).hexdigest()
@@ -244,7 +235,7 @@ async def upload_resume(
         content = await resume_file.read()
         
         if not content.startswith(b'%PDF'):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="文件不是有效的PDF格式")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File is not a valid PDF format")
         
         with open(file_path, "wb") as f:
             f.write(content)
@@ -252,7 +243,7 @@ async def upload_resume(
         return {"message": "简历上传成功", "filename": filename}
         
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"文件上传失败: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"File upload failed: {str(e)}")
 
 
 class RecruitItem(BaseModel):
@@ -387,13 +378,13 @@ def add_evaluation(
 ):
     if not is_manager(db, aid):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前管理员没有权限进行此操作"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Current administrator does not have permission to perform this operation"
         )
     
     recruit = db.query(Recruitment).filter(Recruitment.uid == data.uid).first()
     if not recruit:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="纳新者未找到"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Recruit not found"
         )
     
     admin = db.query(Admin).filter(Admin.aid == int(aid)).first()
@@ -434,7 +425,7 @@ def add_evaluation(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-            detail=f"添加评价时发生错误: {e}"
+            detail=f"Error occurred when adding evaluation: {e}"
         )
 
 
@@ -486,12 +477,11 @@ def interview_pass(
     request: InterviewPassRequest,
     db: Session = Depends(get_db),
 ):
-    """Interview pass handling (recruitment management page)"""
     
     try:
         recruit = db.query(Recruitment).filter(Recruitment.uid == request.uid).first()
         if not recruit:
-            raise HTTPException(status_code=404, detail="纳新者不存在")
+            raise HTTPException(status_code=404, detail="Recruit not found")
         
         if request.round_type == 'first_round':
             recruit.first_round_passed = True
@@ -567,11 +557,11 @@ def interview_pass(
                 description=description
             )
             if success:
-                print(f"面试通过通知发送成功: {recruit.uid}")
+                print(f"Interview pass notification sent successfully: {recruit.uid}")
             else:
-                print(f"面试通过通知发送失败: {recruit.uid}")
+                print(f"Interview pass notification failed: {recruit.uid}")
         except Exception as e:
-            print(f"发送面试通过通知时出错: {e}")
+            print(f"Error sending interview pass notification: {e}")
         
         db.commit()
         
@@ -584,7 +574,7 @@ def interview_pass(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"面试通过处理时发生错误: {e}"
+            detail=f"Error occurred when processing interview pass: {e}"
         )
 
 
@@ -599,7 +589,7 @@ def get_recruit_detail(
     recruit = db.query(Recruitment).filter(Recruitment.uid == uid).first()
     if not recruit:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="纳新记录未找到"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment record not found"
         )
     
     return {
@@ -650,16 +640,16 @@ def final_accept(
     try:
         recruit = db.query(Recruitment).filter(Recruitment.uid == request.uid).first()
         if not recruit:
-            raise HTTPException(status_code=404, detail="纳新者不存在")
+            raise HTTPException(status_code=404, detail="Recruit not found")
         
         if not recruit.first_round_passed:
-            raise HTTPException(status_code=400, detail="必须先通过一面")
+            raise HTTPException(status_code=400, detail="Must pass first round first")
         
         if not recruit.second_round_passed:
-            raise HTTPException(status_code=400, detail="必须先通过二面")
+            raise HTTPException(status_code=400, detail="Must pass second round first")
         
         if not request.department:
-            raise HTTPException(status_code=400, detail="必须先分配部门")
+            raise HTTPException(status_code=400, detail="Must assign department first")
         
         recruit.is_admitted = True
         recruit.evaluation_status = 'accepted'
@@ -734,11 +724,11 @@ def final_accept(
                 description=description
             )
             if success:
-                print(f"录取通知发送成功: {recruit.uid}")
+                print(f"Admission notification sent successfully: {recruit.uid}")
             else:
-                print(f"录取通知发送失败: {recruit.uid}")
+                print(f"Admission notification failed: {recruit.uid}")
         except Exception as e:
-            print(f"发送录取通知时出错: {e}")
+            print(f"Error sending admission notification: {e}")
         
         return {"success": True, "message": "录取成功，录取通知已发送"}
         
@@ -746,7 +736,7 @@ def final_accept(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"录取操作失败: {str(e)}"
+            detail=f"Admission operation failed: {str(e)}"
         )
 
 @router.post("/final-reject", tags=["recruit"])
@@ -757,10 +747,10 @@ def final_reject_candidate(
     try:
         recruit = db.query(Recruitment).filter(Recruitment.uid == request.uid).first()
         if not recruit:
-            raise HTTPException(status_code=404, detail="纳新者不存在")
+            raise HTTPException(status_code=404, detail="Recruit not found")
         
         if recruit.is_admitted:
-            raise HTTPException(status_code=400, detail="已录取的候选人不能拒绝")
+            raise HTTPException(status_code=400, detail="Cannot reject already admitted candidate")
         
         reject_stage = ""
         reject_message = ""
@@ -815,11 +805,11 @@ def final_reject_candidate(
                 description=description
             )
             if success:
-                print(f"拒绝通知发送成功: {recruit.uid}")
+                print(f"Rejection notification sent successfully: {recruit.uid}")
             else:
-                print(f"拒绝通知发送失败: {recruit.uid}")
+                print(f"Rejection notification failed: {recruit.uid}")
         except Exception as e:
-            print(f"发送拒绝通知时出错: {e}")
+            print(f"Error sending rejection notification: {e}")
         
         db.commit()
         
@@ -829,7 +819,7 @@ def final_reject_candidate(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"拒绝操作失败: {str(e)}"
+            detail=f"Rejection operation failed: {str(e)}"
         )
     
     
@@ -852,7 +842,7 @@ def assign_department(
     recruit = db.query(Recruitment).filter(Recruitment.uid == data.uid).first()
     if not recruit:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="纳新者未找到"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Recruit not found"
         )
     
     try:
@@ -863,7 +853,7 @@ def assign_department(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-            detail=f"分配部门时发生错误: {e}"
+            detail=f"Error occurred when assigning department: {e}"
         )
 
 
@@ -875,7 +865,7 @@ def delete_recruit(
     recruit = db.query(Recruitment).filter(Recruitment.uid == data.uid).first()
     if not recruit:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="纳新记录未找到"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Recruitment record not found"
         )
     
     try:
@@ -897,7 +887,7 @@ def delete_recruit(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-            detail=f"删除纳新记录时发生错误: {e}"
+            detail=f"Error occurred when deleting recruitment record: {e}"
         )
 
 
@@ -931,7 +921,7 @@ def delete_all_recruits(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-            detail=f"删除所有纳新记录时发生错误: {e}"
+            detail=f"Error occurred when deleting all recruitment records: {e}"
         )
 
 
@@ -1031,7 +1021,7 @@ def export_recruits(
                     
                     data.append(row_data)
                 except Exception as e:
-                    print(f"处理记录 {recruit.uid} 时出错: {e}")
+                    print(f"Error processing record {recruit.uid}: {e}")
                     continue
         
         df = pd.DataFrame(data)
@@ -1097,9 +1087,9 @@ def export_recruits(
         
     except Exception as e:
         import traceback
-        print(f"导出数据时发生错误: {e}")
-        print(f"错误详情: {traceback.format_exc()}")
+        print(f"Error occurred while exporting data: {e}")
+        print(f"Error details: {traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-            detail=f"导出数据时发生错误: {str(e)}"
+            detail=f"Error occurred when exporting data: {str(e)}"
         )

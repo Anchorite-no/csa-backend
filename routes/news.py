@@ -77,7 +77,7 @@ def get_news_detail(nid: str, db: Session = Depends(get_db)):
     news = db.query(News).filter_by(nid=nid).first()
 
     if not news:
-        raise HTTPException(status_code=404, detail="新闻未找到")
+        raise HTTPException(status_code=404, detail="News not found")
 
     news = NewsDetail(**vars(news))
     news.publisher = aid_to_nick(db, news.publisher)

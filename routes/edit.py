@@ -32,7 +32,7 @@ def edit_news(
 ):
     if not is_manager(db, aid):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前用户没有权限进行此操作"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Current user does not have permission to perform this operation"
         )
 
     old_content = ""
@@ -42,7 +42,7 @@ def edit_news(
         news = db.query(News).filter_by(nid=data.nid).first()
         if not news:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="新闻未找到"
+                status_code=status.HTTP_404_NOT_FOUND, detail="News not found"
             )
         old_content = news.content or ""
         old_image = news.image or ""
@@ -72,7 +72,7 @@ def edit_news(
                 new_image=data.image
             )
             if deleted_count > 0:
-                print(f"清理了 {deleted_count} 个不再使用的图片文件")
+                print(f"Cleaned up {deleted_count} unused image files")
 
     except Exception as e:
         db.rollback()
@@ -97,14 +97,14 @@ def edit_event_category(
 ):
     if not is_manager(db, aid):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="当前用户没有权限进行此操作"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Current user does not have permission to perform this operation"
         )
 
     if data.ecid:
         event_category = db.query(EventCategory).filter_by(ecid=data.ecid).first()
         if not event_category:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="活动类型未找到"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Event category not found"
             )
     else:
         event_category = EventCategory()
@@ -161,7 +161,7 @@ def edit_event(
         event = db.query(Event).filter_by(eid=data.eid).first()
         if not event:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="活动未找到"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Event not found"
             )
         old_content = event.description or ""
         old_image = event.image or ""
@@ -196,7 +196,7 @@ def edit_event(
                 new_image=data.image
             )
             if deleted_count > 0:
-                print(f"清理了 {deleted_count} 个不再使用的图片文件")
+                print(f"Cleaned up {deleted_count} unused image files")
 
     except Exception as e:
         db.rollback()
@@ -222,7 +222,7 @@ def edit_signin(
 ):
     event = db.query(Event).filter_by(eid=data.eid).first()
     if not event:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="活动未找到")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
 
     event.start_signin_time = data.start_signin_time
     event.end_signin_time = data.end_signin_time

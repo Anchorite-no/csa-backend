@@ -35,7 +35,7 @@ def extract_archive(file_path: Path, extract_to: Path) -> bool:
             return False
         return True
     except Exception as e:
-        print(f"解压失败: {e}")
+        print(f"Decompression failed: {e}")
         return False
 
 
@@ -96,7 +96,7 @@ def process_markdown_content(md_file: Path, img_dir: Path) -> tuple[str, str, st
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"处理markdown文件失败: {e}"
+            detail=f"Failed to process markdown file: {e}"
         )
 
 
@@ -111,19 +111,19 @@ async def parse_uploaded_file(
     if not is_manager(db, aid):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="当前用户没有权限进行此操作"
+            detail="Current user does not have permission to perform this operation"
         )
     
     if type not in ['news', 'event']:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="无效的类型参数"
+            detail="Invalid type parameter"
         )
     
     if not (file.filename.endswith('.zip') or file.filename.endswith('.rar')):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="只支持zip和rar格式的压缩包"
+            detail="Only zip and rar format archives are supported"
         )
     
     temp_id = str(uuid.uuid4())
@@ -142,7 +142,7 @@ async def parse_uploaded_file(
         if not extract_archive(file_path, extract_path):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="压缩包解压失败"
+                detail="Archive decompression failed"
             )
         
         is_valid, error_msg, md_file = validate_structure(extract_path)
@@ -168,7 +168,7 @@ async def parse_uploaded_file(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"处理文件时发生错误: {e}"
+            detail=f"Error occurred when processing file: {e}"
         )
     finally:
         if temp_dir.exists():
