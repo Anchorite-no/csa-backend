@@ -172,3 +172,8 @@ uploads/resumes/*
 uploads/images/*
 
 test/*
+
+.env
+.vscode/*
+.idea/*
+__pycache__/*
