@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     SMTP_PORT: int = 995
     SMTP_USER: str = ""
     SMTP_PASSWD: str = ""
+    ADMIN_PASSWORD: str = "ZJUCSA@2025_90381664123847"
 
     class Config:
         env_file = ".env"
