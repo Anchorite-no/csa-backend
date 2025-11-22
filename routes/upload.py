@@ -35,7 +35,6 @@ def extract_archive(file_path: Path, extract_to: Path) -> bool:
                         try:
                             decoded_name = encoded_name.encode('cp437').decode('gbk')
                         except (UnicodeDecodeError, UnicodeEncodeError):
-                            # 最后尝试直接解码（保持原状）
                             decoded_name = encoded_name
                     item.filename = decoded_name
                     zip_ref.extract(item, extract_to)
@@ -69,9 +68,8 @@ def validate_structure(extract_path: Path) -> tuple[bool, str, Optional[Path]]:
     return True, "", md_file
 
 
-# 支持的图片格式后缀（常见的图片格式）
+）
 ALLOWED_IMAGE_EXTENSIONS = {
-    # 常见网络图片格式
     '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'
 }
 
@@ -89,15 +87,12 @@ def validate_image_path(img_path_str: str, base_dir: Path) -> tuple[bool, str]:
         - is_valid: True 表示路径安全，False 表示路径不安全
         - error_message: 验证失败时的错误信息
     """
-    # 检查是否为绝对路径
     if img_path_str.startswith('/') or img_path_str.startswith('\\'):
         return False, "不允许使用绝对路径"
     
-    # 检查是否包含不合法的协议（如file:// 等）
     if 'file://' in img_path_str:
         return False, "不允许使用 file URL 链接"
     
-    # 将字符串转换为 Path 对象以规范化路径
     img_path = Path(img_path_str)
     
     # 检查文件后缀是否为允许的图片格式
@@ -111,12 +106,9 @@ def validate_image_path(img_path_str: str, base_dir: Path) -> tuple[bool, str]:
     # 检查是否为路径穿越攻击（../）
     # 使用 resolve() 后与 base_dir resolve() 比较，确保解析后的路径在 base_dir 内
     try:
-        # 将相对路径与基础目录合并
         full_path = (base_dir / img_path).resolve()
         base_dir_resolved = base_dir.resolve()
         
-        # 检查解析后的路径是否在 base_dir 内
-        # 使用 is_relative_to() 检查（Python 3.9+）或手动检查
         try:
             full_path.relative_to(base_dir_resolved)
         except ValueError:
@@ -140,7 +132,6 @@ def detect_and_read_file(file_path: Path) -> str:
         except (UnicodeDecodeError, UnicodeError):
             continue
     
-    # 如果所有编码都失败，使用 UTF-8 并忽略错误
     print(f"Warning: Could not detect encoding for {file_path}, using utf-8 with errors='ignore'")
     return file_path.read_text(encoding='utf-8', errors='ignore')
 
@@ -156,11 +147,10 @@ def process_markdown_content(md_file: Path, img_dir: Path) -> tuple[str, str, st
             alt_text = match.group(1)
             img_path_str = match.group(2)
             
-            # 验证路径安全性
             is_valid, error_msg = validate_image_path(img_path_str, img_dir)
             if not is_valid:
                 print(f"Warning: {error_msg}, 图片路径: {img_path_str}")
-                return match.group(0)  # 保持原样，跳过不安全的路径
+                return match.group(0)  
             
             img_path = Path(img_path_str)
 
@@ -175,7 +165,7 @@ def process_markdown_content(md_file: Path, img_dir: Path) -> tuple[str, str, st
                 
                 return f"![{alt_text}](/uploads/images/{unique_name})"
             else:
-                return match.group(0)  # 保持原样
+                return match.group(0)
         
         processed_content = re.sub(
             r'!\[([^\]]*)\]\(([^)]+)\)',
