@@ -27,28 +27,17 @@ def extract_archive(file_path: Path, extract_to: Path) -> bool:
     try:
         if file_path.suffix.lower() == '.zip':
             with zipfile.ZipFile(file_path, 'r') as zip_ref:
-                # 处理 ZIP 文件中的中文编码问题
-                # 首先使用 UTF-8 尝试，失败则使用 GBK
                 for item in zip_ref.infolist():
-                    # 获取原始的文件名字节
                     encoded_name = item.filename
-                    
-                    # 如果文件名中包含非 ASCII 字符，尝试重新编码
                     try:
-                        # 先尝试用 UTF-8 解码（Windows 上 7-Zip 使用 UTF-8）
                         decoded_name = encoded_name.encode('cp437').decode('utf-8')
                     except (UnicodeDecodeError, UnicodeEncodeError):
                         try:
-                            # 如果失败，尝试 GBK（中文 Windows 默认）
                             decoded_name = encoded_name.encode('cp437').decode('gbk')
                         except (UnicodeDecodeError, UnicodeEncodeError):
                             # 最后尝试直接解码（保持原状）
                             decoded_name = encoded_name
-                    
-                    # 更新 item 的 filename
                     item.filename = decoded_name
-                    
-                    # 提取单个文件
                     zip_ref.extract(item, extract_to)
         elif file_path.suffix.lower() == '.rar':
             with rarfile.RarFile(file_path, 'r') as rar_ref:
@@ -83,15 +72,7 @@ def validate_structure(extract_path: Path) -> tuple[bool, str, Optional[Path]]:
 # 支持的图片格式后缀（常见的图片格式）
 ALLOWED_IMAGE_EXTENSIONS = {
     # 常见网络图片格式
-    '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp',
-    # 其他图片格式
-    '.ico', '.tiff', '.tif', '.jpe', '.jfif', '.heic', '.heif',
-    # 专业图片格式
-    '.psd', '.ai', '.eps', '.pdf', '.raw', '.exif',
-    # 矢量和动画格式
-    '.apng', '.avif', '.jp2', '.j2k', '.jpf', '.jpx', '.jpm', '.mj2',
-    # 不太常见但仍支持的格式
-    '.dib', '.dcm', '.dicom', '.pcx', '.tga', '.icns', '.pbm', '.pgm', '.ppm',
+    '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'
 }
 
 
