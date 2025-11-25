@@ -67,7 +67,6 @@ class NewsDetail(BaseModel):
     category: int
     last_update: int
     first_publish: int
-    publisher: str
     category: int
     image: str
 
@@ -80,6 +79,5 @@ def get_news_detail(nid: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="News not found")
 
     news = NewsDetail(**vars(news))
-    news.publisher = aid_to_nick(db, news.publisher)
 
     return news
