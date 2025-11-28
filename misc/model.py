@@ -4,11 +4,12 @@ def create_admin():
     from models.user import User
     from models.admin import Admin
     from models import get_db
-
+    from config import get_config
     db = list(get_db())[0]
     has_user = db.query(User).count()
 
-    passwd = sha256("ZJUCSA@2025_90381664123847".encode("utf-8")).hexdigest()
+    admin_password = get_config("ADMIN_PASSWORD")
+    passwd = sha256(admin_password.encode("utf-8")).hexdigest()
     passwd = hash_passwd(passwd)
 
     if not has_user:
@@ -22,7 +23,6 @@ def create_admin():
         if passwd != user.passwd:
             user.passwd = passwd
             db.commit()
-        print("admin passwd updated")
 
 
 def aid_to_nick(db, aid: str):
