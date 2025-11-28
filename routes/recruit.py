@@ -13,7 +13,7 @@ from markdown import markdown
 from html2text import HTML2Text
 
 from misc.model import aid_to_nick
-from misc.auth import get_current_user, get_current_admin, login_required_admin
+from misc.auth import get_current_user, get_current_admin, login_required_admin, hash_passwd
 from models import get_db
 from models.participation import Participation
 from models.relation.user_event import user_event
@@ -679,6 +679,27 @@ def final_accept(
             )
             db.add(member)
         
+        raw_password = f"{recruit.uid[1:3]}CSA@{recruit.uid[-4:]}"
+        pre_hashed_password = hashlib.sha256(raw_password.encode()).hexdigest() 
+        db_stored_password = hash_passwd(pre_hashed_password)
+        
+        existing_user = db.query(User).filter_by(uid=recruit.uid).first()
+
+        if not existing_user:
+            user = User(
+                uid = recruit.uid,
+                nick = recruit.name,
+                passwd = db_stored_password,
+                email = recruit.email if hasattr(recruit, 'email') else "",
+                last_login = 0,
+                role_id = 1
+            )
+            db.add(user)
+        else:
+            existing_user.passwd = db_stored_password
+            existing_user.role_id = 1
+        
+        
         db.commit()
         
         department_labels = {
@@ -703,6 +724,9 @@ def final_accept(
 
 【关于CSA】
 浙江大学学生网络空间安全协会（ZJUCSA）是一个专注于网络空间安全技术学习、研究和实践的学术社团。我们致力于为对网络安全感兴趣的同学提供一个学习交流的平台，通过技术分享、竞赛培训、项目实践等多种形式，帮助成员提升专业技能。
+•协会官网: csa.zju.edu.cn
+•你的账号: {recruit.uid}
+•你的密码: {raw_password}
 
 【后续安排】
 请添加部门部长微信: {vx_number[request.department]}
