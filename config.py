@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     SMTP_PASSWD: str = ""
     ADMIN_PASSWORD: str = "ZJUCSA@2025_90381664123847"
 
+    RECRUIT_DEADLINE: str = "2099-12-31"
+
     class Config:
         env_file = ".env"
 
@@ -101,3 +103,11 @@ def update_dingtalk_config(appid: Optional[str] = None,
         dingtalk_config.secret = secret
     if enabled is not None:
         dingtalk_config.enabled = enabled
+
+def update_recruit_deadline_in_memory(new_deadline_str: str):
+    settings = get_config()
+    
+    settings.RECRUIT_DEADLINE = new_deadline_str
+
+    get_config.cache_clear() 
+    return settings

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Body, HTTPException, status
 from pydantic import BaseModel, constr, EmailStr, Field
 from typing import Annotated, Optional
 from sqlalchemy.orm import Session
@@ -20,8 +20,12 @@ from models.relation.user_event import user_event
 from models.relation.user_roles import user_role_association
 from models.relation.admin_roles import admin_role_association
 from models.recruit import Recruitment, Evaluation
-
-router = APIRouter()
+from ..config import update_recruit_deadline_in_memory 
+from ..auth import admin_required
+router = APIRouter(
+    prefix="/admin", 
+    tags=["Admin"],
+    dependencies=[Depends(admin_required)])
 
 
 class AdminAuthorization(BaseModel):
@@ -233,4 +237,25 @@ def update_user_role(
 
     return {"msg": "用户角色已成功更改"}
 
+@router.post('/setRecruitDeadline')
+async def set_recruit_deadline(
+    deadline_data: dict = Body(...)
+):
+    
+    deadline_str = deadline_data.get('deadline') # 接收前端传来的 "YYYY-MM-DD"
+    
+    if not deadline_str:
+        raise HTTPException(status_code=400, detail="缺少截止日期参数 'deadline'")
 
+    try:
+        datetime.strptime(deadline_str, "%Y-%m-%d")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="日期格式错误，请使用 YYYY-MM-DD 格式")
+
+    update_recruit_deadline_in_memory(deadline_str)
+    
+    return {
+        "code": 200,
+        "message": "招新截止日期设置成功",
+        "data": {"deadline": deadline_str}
+    }
