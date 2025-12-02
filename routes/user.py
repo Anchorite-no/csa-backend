@@ -26,6 +26,7 @@ from models.event import Event
 from models.participation import Participation
 from models.user import User
 from models.admin import Admin
+from models.member import Member
 
 router = APIRouter()
 
@@ -91,42 +92,108 @@ class AdminToken(BaseModel):
     access_token: str
     token_type: str = "bearer"
 
-
-@router.post("/login/admin", response_model=AdminToken, tags=["admin"])
-def login(
-    data: AdminLogin,
-    db: Session = Depends(get_db),
-):
+@router.post("/login", tags=["user", "admin"])
+def login(data: UserLogin, db: Session = Depends(get_db)):
+    """
+    统一登录接口，自动判断用户身份
+    - 如果是管理员，返回 AdminToken
+    - 如果是普通用户，返回 UserToken
+    """
     user = db.query(User).filter_by(uid=data.uid).first()
 
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
 
     if not verify_passwd(data.passwd, user.passwd.encode("utf-8")):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password")
 
     admin = db.query(Admin).filter_by(aid=data.uid).first()
-
-    if not admin:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Administrator not found",
+    
+    if admin and admin.is_active:
+        # 管理员登录，返回 AdminToken
+        admin_token = create_access_token_admin(
+            aid=admin.aid, uid=user.uid, expires_delta=timedelta(hours=2), nick=user.nick
         )
+        user.last_login = int(time.time())
+        db.commit()
+        return AdminToken(access_token=admin_token)
+    else:
+        # 普通用户登录，返回 UserToken
+        user_token = create_access_token(user.uid, timedelta(hours=2), nick=user.nick)
+        user.last_login = int(time.time())
+        db.commit()
+        return UserToken(access_token=user_token)
+# 使用 /login 统一登录接口
+# @router.post("/login/admin", response_model=AdminToken, tags=["admin"])
+# def login(
+#     data: AdminLogin,
+#     db: Session = Depends(get_db),
+# ):
+#     user = db.query(User).filter_by(uid=data.uid).first()
 
-    if not admin.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="This administrator account is not activated",
-        )
+#     if not user:
+#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    admin_token = create_access_token_admin(
-        aid=admin.aid, uid=user.uid, expires_delta=timedelta(hours=2), nick=user.nick
-    )
+#     if not verify_passwd(data.passwd, user.passwd.encode("utf-8")):
+#         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password")
 
-    user.last_login = int(time.time())
-    db.commit()
+#     admin = db.query(Admin).filter_by(aid=data.uid).first()
 
-    return AdminToken(access_token=admin_token)
+#     if not admin:
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND,
+#             detail="Administrator not found",
+#         )
+
+#     if not admin.is_active:
+#         raise HTTPException(
+#             status_code=status.HTTP_403_FORBIDDEN,
+#             detail="This administrator account is not activated",
+#         )
+
+#     admin_token = create_access_token_admin(
+#         aid=admin.aid, uid=user.uid, expires_delta=timedelta(hours=2), nick=user.nick
+#     )
+
+#     user.last_login = int(time.time())
+#     db.commit()
+
+#     return AdminToken(access_token=admin_token)
+
+
+# @router.post("/login/user", response_model=UserToken, tags=["user"])
+# def login_user(
+#     data: AdminLogin,  # 使用同样的验证模型
+#     db: Session = Depends(get_db),
+# ):
+#     """普通用户登录接口"""
+#     user = db.query(User).filter_by(uid=data.uid).first()
+
+#     if not user:
+#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+#     if not verify_passwd(data.passwd, user.passwd.encode("utf-8")):
+#         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password")
+
+#     # 检查是否为管理员
+#     admin = db.query(Admin).filter_by(aid=data.uid).first()
+#     if admin and admin.is_active:
+#         raise HTTPException(
+#             status_code=status.HTTP_403_FORBIDDEN,
+#             detail="You are an administrator, right? Please use the admin login endpoint",
+#         )
+
+#     # 生成普通用户 Token
+#     user_token = create_access_token(
+#         uid=user.uid, expires_delta=timedelta(hours=2), nick=user.nick
+#     )
+
+#     user.last_login = int(time.time())
+#     db.commit()
+
+#     return UserToken(access_token=user_token)
 
 
 @router.post("/wxlogin", response_model=UserToken, tags=["user"])
@@ -162,27 +229,7 @@ def wxlogin(data: WxUserLogin, db: Session = Depends(get_db)):
     db.commit()
 
     return UserToken(access_token=token)
-
-
-@router.post("/login", response_model=UserToken, tags=["user"])
-def login(data: UserLogin, db: Session = Depends(get_db)):
-    user = db.query(User).filter_by(uid=data.uid).first()
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="User not found"
-        )
-
-    if not verify_passwd(data.passwd, user.passwd):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password")
-
-    token = create_access_token(user.uid, timedelta(hours=2), nick=user.nick)
-
-    user.last_login = int(time.time())
-    db.commit()
-
-    return UserToken(access_token=token)
-
+    
 
 @router.post("/token", response_model=UserToken, tags=["user"])
 def token(data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
@@ -455,3 +502,135 @@ def check_participation(
         return {"msg": False}
 
     return {"msg": True}
+
+
+class UserProfile(BaseModel):
+    uid: str
+    nick: str
+    email: Optional[str] = None
+    name: Optional[str] = None
+    gender: Optional[str] = None  # '男' or '女'
+    phone: Optional[str] = None
+    wechat: Optional[str] = None
+    qq: Optional[str] = None
+    major_name: Optional[str] = None
+    college_name: Optional[str] = None
+    grade: Optional[int] = None
+    department: Optional[str] = None
+    position: Optional[str] = None
+    is_active: Optional[bool] = None
+    skills: Optional[str] = None
+    user_type: str = "会员"  # 用户类型：会员、干事
+
+
+class UpdateUserProfile(BaseModel):
+    # User表字段（所有用户可编辑）
+    email: Optional[str] = None
+    # Member表字段（仅干事可编辑）
+    phone: Optional[str] = None
+    wechat: Optional[str] = None
+    qq: Optional[str] = None
+    skills: Optional[str] = None
+    # 注意：姓名、学号、性别、专业不可编辑
+
+
+@router.get("/profile", response_model=UserProfile, tags=["user"])
+def get_user_profile(
+    uid: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """获取用户个人资料"""
+    user = db.query(User).filter_by(uid=uid).first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # 根据 role_id 判断用户类型；下面只是我假定的，具体后续添加权限表后按实际修改，暂时只考虑会员和干事的展示逻辑
+    # 1=会员, 2=干事, 7=管理员
+    role_names = {1: "会员", 2: "干事"}
+    user_type = role_names.get(user.role_id, "会员")
+    
+    # 基础资料来自User表（所有用户都有）
+    profile_data = {
+        "uid": user.uid,
+        "nick": user.nick,
+        "email": user.email,
+        "user_type": user_type,
+    }
+    # 如果是干事，尝试从Member表获取信息
+    if user.role_id == 2:
+        member = db.query(Member).filter_by(uid=uid).first()
+        if member:
+            profile_data.update({
+                "name": member.name,
+                "gender": "女" if member.render else "男",
+                "phone": member.phone,
+                "wechat": member.wechat,
+                "qq": member.qq,
+                "major_name": member.major_name,
+                "college_name": member.college_name,
+                "grade": member.grade,
+                "department": member.department,
+                "position": member.position,
+                "is_active": member.is_active,
+                "skills": member.skills,
+            })
+        else:
+            # TODO: 在 member 表中添加一条新记录？待确认
+            pass
+    # 如果member不存在，这些字段为None，前端会显示为"-"
+    return UserProfile(**profile_data)
+
+
+@router.put("/profile", tags=["user"])
+def update_user_profile(
+    data: UpdateUserProfile,
+    uid: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    更新用户个人资料
+    - 所有用户可编辑 User 表字段（email）
+    - 干事可额外编辑 Member 表字段（phone, wechat, qq, skills）
+    - 姓名、学号、性别、专业不可编辑
+    """
+    user = db.query(User).filter_by(uid=uid).first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # 更新 User 表字段（目前只有在对应表中确实存在的字段编辑后才可真正成功）
+    if data.email is not None:
+        # 检查邮箱是否被占用
+        existing = db.query(User).filter(User.email == data.email, User.uid != uid).first()
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already in use"
+            )
+        user.email = data.email
+    
+    # 检查是否为干事，如果是则可以更新 Member 表字段
+    if user.role_id == 2:
+        member = db.query(Member).filter_by(uid=uid).first()
+        if member:
+            if data.phone is not None:
+                member.phone = data.phone
+            if data.wechat is not None:
+                member.wechat = data.wechat
+            if data.qq is not None:
+                member.qq = data.qq
+            if data.skills is not None:
+                member.skills = data.skills
+        else:
+            # 在 member 表中添加一条新记录？待确认
+            pass
+    
+    db.commit()
+    return {"msg": "Profile updated successfully"}
