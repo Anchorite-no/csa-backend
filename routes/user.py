@@ -94,11 +94,7 @@ class AdminToken(BaseModel):
 
 @router.post("/login", tags=["user", "admin"])
 def login(data: UserLogin, db: Session = Depends(get_db)):
-    """
-    统一登录接口，自动判断用户身份
-    - 如果是管理员，返回 AdminToken
-    - 如果是普通用户，返回 UserToken
-    """
+
     user = db.query(User).filter_by(uid=data.uid).first()
 
     if not user:
@@ -112,7 +108,6 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
     admin = db.query(Admin).filter_by(aid=data.uid).first()
     
     if admin and admin.is_active:
-        # 管理员登录，返回 AdminToken
         admin_token = create_access_token_admin(
             aid=admin.aid, uid=user.uid, expires_delta=timedelta(hours=2), nick=user.nick
         )
@@ -120,80 +115,10 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
         db.commit()
         return AdminToken(access_token=admin_token)
     else:
-        # 普通用户登录，返回 UserToken
         user_token = create_access_token(user.uid, timedelta(hours=2), nick=user.nick)
         user.last_login = int(time.time())
         db.commit()
         return UserToken(access_token=user_token)
-# 使用 /login 统一登录接口
-# @router.post("/login/admin", response_model=AdminToken, tags=["admin"])
-# def login(
-#     data: AdminLogin,
-#     db: Session = Depends(get_db),
-# ):
-#     user = db.query(User).filter_by(uid=data.uid).first()
-
-#     if not user:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-#     if not verify_passwd(data.passwd, user.passwd.encode("utf-8")):
-#         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password")
-
-#     admin = db.query(Admin).filter_by(aid=data.uid).first()
-
-#     if not admin:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND,
-#             detail="Administrator not found",
-#         )
-
-#     if not admin.is_active:
-#         raise HTTPException(
-#             status_code=status.HTTP_403_FORBIDDEN,
-#             detail="This administrator account is not activated",
-#         )
-
-#     admin_token = create_access_token_admin(
-#         aid=admin.aid, uid=user.uid, expires_delta=timedelta(hours=2), nick=user.nick
-#     )
-
-#     user.last_login = int(time.time())
-#     db.commit()
-
-#     return AdminToken(access_token=admin_token)
-
-
-# @router.post("/login/user", response_model=UserToken, tags=["user"])
-# def login_user(
-#     data: AdminLogin,  # 使用同样的验证模型
-#     db: Session = Depends(get_db),
-# ):
-#     """普通用户登录接口"""
-#     user = db.query(User).filter_by(uid=data.uid).first()
-
-#     if not user:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-#     if not verify_passwd(data.passwd, user.passwd.encode("utf-8")):
-#         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password")
-
-#     # 检查是否为管理员
-#     admin = db.query(Admin).filter_by(aid=data.uid).first()
-#     if admin and admin.is_active:
-#         raise HTTPException(
-#             status_code=status.HTTP_403_FORBIDDEN,
-#             detail="You are an administrator, right? Please use the admin login endpoint",
-#         )
-
-#     # 生成普通用户 Token
-#     user_token = create_access_token(
-#         uid=user.uid, expires_delta=timedelta(hours=2), nick=user.nick
-#     )
-
-#     user.last_login = int(time.time())
-#     db.commit()
-
-#     return UserToken(access_token=user_token)
 
 
 @router.post("/wxlogin", response_model=UserToken, tags=["user"])
