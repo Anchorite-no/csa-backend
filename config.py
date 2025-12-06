@@ -4,6 +4,7 @@ import subprocess
 from functools import cache, lru_cache
 from typing import Optional
 from pydantic_settings import BaseSettings
+from pathlib import Path 
 
 
 class Settings(BaseSettings):
@@ -104,10 +105,24 @@ def update_dingtalk_config(appid: Optional[str] = None,
     if enabled is not None:
         dingtalk_config.enabled = enabled
 
-def update_recruit_deadline_in_memory(new_deadline_str: str):
-    settings = get_config()
+def update_recruit_deadline(new_deadline_str: str):
+    env_file_path = Path(".env")                
     
-    settings.RECRUIT_DEADLINE = new_deadline_str
-
-    get_config.cache_clear() 
-    return settings
+    if env_file_path.exists():                
+        content = env_file_path.read_text(encoding="utf-8")                
+        lines = content.splitlines()                       
+        key_found = False                
+        new_lines = []                
+        for line in lines:                
+            if line.strip().startswith("RECRUIT_DEADLINE="):                
+                new_lines.append(f"RECRUIT_DEADLINE={new_deadline_str}")                
+                key_found = True                
+            else:                
+                new_lines.append(line)                       
+        if not key_found:                
+            new_lines.append(f"RECRUIT_DEADLINE={new_deadline_str}")                                           
+        env_file_path.write_text("\n".join(new_lines), encoding="utf-8")                
+    else:                
+        env_file_path.write_text(f"RECRUIT_DEADLINE={new_deadline_str}", encoding="utf-8")                
+    get_config.cache_clear()                 
+    return get_config()

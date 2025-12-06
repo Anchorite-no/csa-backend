@@ -27,9 +27,9 @@ from datetime import datetime
 from misc.dingtalk import send_dingtalk_message_to_user
 from routes.admin import is_manager
 
-from ..config import get_config
+from config import get_config
 
-router = APIRouter(prefix="/recruit", tags=["Recruitment"])
+router = APIRouter()
 
 
 
@@ -156,7 +156,7 @@ def confirm_recruit(data: RecruitItem, db: Session = Depends(get_db)):
     if existing_recruit:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This student ID has already submitted application information")
     
-settings = get_config()
+    settings = get_config()
     deadline_str = settings.RECRUIT_DEADLINE
 
     try:

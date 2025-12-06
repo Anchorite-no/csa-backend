@@ -67,8 +67,6 @@ def validate_structure(extract_path: Path) -> tuple[bool, str, Optional[Path]]:
 
     return True, "", md_file
 
-
-）
 ALLOWED_IMAGE_EXTENSIONS = {
     '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'
 }

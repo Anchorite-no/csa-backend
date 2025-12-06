@@ -20,12 +20,8 @@ from models.relation.user_event import user_event
 from models.relation.user_roles import user_role_association
 from models.relation.admin_roles import admin_role_association
 from models.recruit import Recruitment, Evaluation
-from ..config import update_recruit_deadline_in_memory 
-from ..auth import admin_required
-router = APIRouter(
-    prefix="/admin", 
-    tags=["Admin"],
-    dependencies=[Depends(admin_required)])
+from config import update_recruit_deadline
+router = APIRouter()
 
 
 class AdminAuthorization(BaseModel):
@@ -56,6 +52,9 @@ class UserRoleUpdate(BaseModel):
 
 class UserDelete(BaseModel):
     uid: Annotated[str, Field(pattern=r"^\d+$")]  
+
+class SetRecruitDeadline(BaseModel):
+    deadline: Annotated[str, Field(pattern=r"\d{4}-\d{2}-\d{2}")]
 
 
 def is_manager(db: Session, aid: str) -> bool:
@@ -237,22 +236,18 @@ def update_user_role(
 
     return {"msg": "用户角色已成功更改"}
 
-@router.post('/setRecruitDeadline')
-async def set_recruit_deadline(
-    deadline_data: dict = Body(...)
+@router.post("/setRecruitDeadline", tags=["admin"])
+def set_recruit_deadline(
+    data: SetRecruitDeadline
 ):
+    deadline_str = data.deadline  
     
-    deadline_str = deadline_data.get('deadline') # 接收前端传来的 "YYYY-MM-DD"
-    
-    if not deadline_str:
-        raise HTTPException(status_code=400, detail="缺少截止日期参数 'deadline'")
-
     try:
         datetime.strptime(deadline_str, "%Y-%m-%d")
     except ValueError:
         raise HTTPException(status_code=400, detail="日期格式错误，请使用 YYYY-MM-DD 格式")
-
-    update_recruit_deadline_in_memory(deadline_str)
+    
+    update_recruit_deadline(deadline_str)
     
     return {
         "code": 200,
