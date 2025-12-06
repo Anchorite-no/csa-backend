@@ -6,6 +6,7 @@ import uuid
 import re
 from pathlib import Path
 from typing import Optional
+from urllib.parse import unquote
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
 from sqlalchemy.orm import Session
@@ -134,7 +135,7 @@ def detect_and_read_file(file_path: Path) -> str:
     return file_path.read_text(encoding='utf-8', errors='ignore')
 
 
-def process_markdown_content(md_file: Path, img_dir: Path) -> tuple[str, str, str]:
+def process_markdown_content(md_file: Path, img_dir: Path, target_img_dir: Path, img_url_prefix: str) -> tuple[str, str, str]:
     try:
         content = detect_and_read_file(md_file)
         
@@ -143,7 +144,7 @@ def process_markdown_content(md_file: Path, img_dir: Path) -> tuple[str, str, st
         
         def replace_image_link(match):
             alt_text = match.group(1)
-            img_path_str = match.group(2)
+            img_path_str = unquote(match.group(2))
             
             is_valid, error_msg = validate_image_path(img_path_str, img_dir)
             if not is_valid:
@@ -156,12 +157,11 @@ def process_markdown_content(md_file: Path, img_dir: Path) -> tuple[str, str, st
                 img_file = img_dir / img_path
                 file_ext = img_file.suffix
                 unique_name = f"{uuid.uuid4()}{file_ext}"
-                new_img_path = IMAGES_DIR / unique_name # 这里后续要加一个nid目录
+                new_img_path = target_img_dir / unique_name 
 
-                # 这里后续就不要直接copy过去，也要做一个tempdir
                 shutil.copy2(img_file, new_img_path)
                 
-                return f"![{alt_text}](/uploads/images/{unique_name})"
+                return f"![{alt_text}]({img_url_prefix}{unique_name})"
             else:
                 return match.group(0)
         
@@ -189,6 +189,8 @@ def process_markdown_content(md_file: Path, img_dir: Path) -> tuple[str, str, st
 async def parse_uploaded_file(
     file: UploadFile = File(...),
     type: str = Form(...),
+    nid: Optional[int] = Form(None),
+    eid: Optional[int] = Form(None),
     db: Session = Depends(get_db),
     aid: str = Depends(get_current_admin)
 ):
@@ -205,6 +207,26 @@ async def parse_uploaded_file(
             detail="Invalid type parameter"
         )
     
+    # Determine image directory based on nid/eid
+    # Use separate directories for news and events to avoid collision
+    if nid and type == 'news':
+        # Use 'news' subdirectory for new structure
+        target_img_dir = IMAGES_DIR / 'news' / str(nid)
+        target_img_dir.mkdir(parents=True, exist_ok=True)
+        img_url_prefix = f"/uploads/images/news/{nid}/"
+    elif eid and type == 'event':
+        target_img_dir = IMAGES_DIR / 'event' / str(eid)
+        target_img_dir.mkdir(parents=True, exist_ok=True)
+        img_url_prefix = f"/uploads/images/event/{eid}/"
+    elif nid and type == 'news' and (IMAGES_DIR / str(nid)).exists():
+         # Backward compatibility for flat structure if it already exists
+         target_img_dir = IMAGES_DIR / str(nid)
+         img_url_prefix = f"/uploads/images/{nid}/"
+    else:
+        # Fallback to flat directory
+        target_img_dir = IMAGES_DIR
+        img_url_prefix = "/uploads/images/"
+
     if not (file.filename.endswith('.zip') or file.filename.endswith('.rar')):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -236,9 +258,10 @@ async def parse_uploaded_file(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=error_msg
             )
-        
-        base_dir = md_file.parent
-        title, content, first_image = process_markdown_content(md_file, base_dir)
+            
+        # Pass target_img_dir and img_url_prefix to process_markdown_content
+        # Use md_file.parent as the base directory for finding images (supports relative paths)
+        title, content, first_image = process_markdown_content(md_file, md_file.parent, target_img_dir, img_url_prefix)
         
         return {
             "success": True,
@@ -251,10 +274,13 @@ async def parse_uploaded_file(
     except HTTPException:
         raise
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error occurred when processing file: {e}"
+            detail=f"An error occurred during parsing: {e}"
         )
     finally:
+        # Cleanup temp files
         if temp_dir.exists():
             shutil.rmtree(temp_dir, ignore_errors=True)

@@ -38,6 +38,7 @@ class EventCount(BaseModel):
 @router.get("/count", response_model=EventCount)
 def get_events_count(category: int = None, db: Session = Depends(get_db)):
     count = db.query(Event)
+    count = count.filter(Event.first_publish > 0)  # Filter out drafts
     count = count.filter_by(ecid=category) if category else count
     count = count.count()
 
@@ -49,6 +50,7 @@ def get_events_list(
     page: int = 1, size: int = 8, category: int = None, db: Session = Depends(get_db)
 ):
     events = db.query(Event)
+    events = events.filter(Event.first_publish > 0)  # Filter out drafts
     if category:
         events = events.filter_by(ecid=category)
 

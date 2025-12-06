@@ -1,3 +1,5 @@
+import shutil
+from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -11,6 +13,7 @@ from models.news import News
 from routes.admin import is_manager
 
 router = APIRouter()
+IMAGES_DIR = Path("uploads/images")
 
 
 class DeleteNews(BaseModel):
@@ -46,6 +49,26 @@ def delete_news(
         db.delete(news)
         db.commit()
         
+        # Try to delete the entire directory for this news
+        # Check for new structure (uploads/images/news/{nid})
+        news_img_dir_new = IMAGES_DIR / 'news' / str(data.nid)
+        if news_img_dir_new.exists() and news_img_dir_new.is_dir():
+            try:
+                shutil.rmtree(news_img_dir_new)
+                print(f"Deleted new image directory: {news_img_dir_new}")
+            except Exception as e:
+                print(f"Failed to delete new image directory {news_img_dir_new}: {e}")
+
+        # Check for legacy structure (uploads/images/{nid})
+        news_img_dir_legacy = IMAGES_DIR / str(data.nid)
+        if news_img_dir_legacy.exists() and news_img_dir_legacy.is_dir():
+            try:
+                shutil.rmtree(news_img_dir_legacy)
+                print(f"Deleted legacy image directory: {news_img_dir_legacy}")
+            except Exception as e:
+                print(f"Failed to delete legacy image directory {news_img_dir_legacy}: {e}")
+
+        # Legacy cleanup for old images not in nid directory
         deleted_count = cleanup_all_images(content, image)
         if deleted_count > 0:
             print(f"Cleaned up {deleted_count} image files when deleting news")
@@ -94,16 +117,9 @@ def delete_event(
 
 @router.post("/event")
 def delete_event(
-        data: DeleteEvent,
-        db: Session = Depends(get_db),
-        
+    data: DeleteEvent,
+    db: Session = Depends(get_db)
 ):
-    
-    
-    
-    
-    #     )
-
     event = db.query(Event).filter_by(eid=data.eid).first()
 
     if not event:
@@ -119,6 +135,15 @@ def delete_event(
         db.delete(event)
         db.commit()
         
+        # Try to delete the entire directory for this event
+        event_img_dir = IMAGES_DIR / 'event' / str(data.eid)
+        if event_img_dir.exists() and event_img_dir.is_dir():
+            try:
+                shutil.rmtree(event_img_dir)
+                print(f"Deleted image directory: {event_img_dir}")
+            except Exception as e:
+                print(f"Failed to delete image directory {event_img_dir}: {e}")
+
         deleted_count = cleanup_all_images(content, image)
         if deleted_count > 0:
             print(f"Cleaned up {deleted_count} image files when deleting event")

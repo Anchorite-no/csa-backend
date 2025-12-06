@@ -22,6 +22,7 @@ def init_app_routes(app: FastAPI):
     from routes.member import router as member_router
     from routes.upload import router as upload_router
     from routes.images import router as images_router
+    from routes.create import router as create_router
 
     app.include_router(
         news_router,
@@ -96,6 +97,13 @@ def init_app_routes(app: FastAPI):
         upload_router,
         prefix="/api/upload",
         tags=["upload"],
+        dependencies=[Depends(login_required_admin)],
+    )
+
+    app.include_router(
+        create_router,
+        prefix="/api/create",
+        tags=["create"],
         dependencies=[Depends(login_required_admin)],
     )
     

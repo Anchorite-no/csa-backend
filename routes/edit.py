@@ -57,6 +57,10 @@ def edit_news(
     news.last_update = int(time.time())
 
     try:
+        # Check if this is a draft being published for the first time
+        if news.first_publish == 0:
+            news.first_publish = int(time.time())
+            
         if not data.nid:
             news.first_publish = int(time.time())
             news.publisher = aid
@@ -181,6 +185,10 @@ def edit_event(
     event.last_update = int(time.time())
 
     try:
+        # Check if this is a draft being published for the first time
+        if event.first_publish == 0:
+            event.first_publish = int(time.time())
+            
         if not data.eid:
             event.first_publish = int(time.time())
             event.publisher = aid
