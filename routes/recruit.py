@@ -95,17 +95,20 @@ class ConfirmationMajor(BaseModel):
     major_name: str
     grade: int
 
-@router.get('/getDeadline')
+@router.get('/get_deadline')
 async def get_deadline():
     settings = get_config()
     deadline_str = settings.RECRUIT_DEADLINE 
-    
+    if not deadline_str:
+        return {
+            "code": 500,
+            "message": "未找到截止日期",
+            "deadline": None
+        }
     return {
         "code": 200,
-        "message": "获取成功",
-        "data": {
-            "deadline": deadline_str  
-        }
+        "message": "获取截止日期成功",
+        "deadline": deadline_str  
     }
 
 @router.post("/major_confirm")

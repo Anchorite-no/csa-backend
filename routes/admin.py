@@ -236,7 +236,7 @@ def update_user_role(
 
     return {"msg": "用户角色已成功更改"}
 
-@router.post("/setRecruitDeadline", tags=["admin"])
+@router.post("/set_recruit_deadline", tags=["admin"])
 def set_recruit_deadline(
     data: SetRecruitDeadline
 ):
