@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Body, HTTPException, status
 from pydantic import BaseModel, constr, EmailStr, Field
 from typing import Annotated, Optional
 from sqlalchemy.orm import Session
@@ -20,7 +20,7 @@ from models.relation.user_event import user_event
 from models.relation.user_roles import user_role_association
 from models.relation.admin_roles import admin_role_association
 from models.recruit import Recruitment, Evaluation
-
+from config import update_recruit_deadline
 router = APIRouter()
 
 
@@ -52,6 +52,9 @@ class UserRoleUpdate(BaseModel):
 
 class UserDelete(BaseModel):
     uid: Annotated[str, Field(pattern=r"^\d+$")]  
+
+class SetRecruitDeadline(BaseModel):
+    deadline: Annotated[str, Field(pattern=r"\d{4}-\d{2}-\d{2}")]
 
 
 def is_manager(db: Session, aid: str) -> bool:
@@ -233,4 +236,21 @@ def update_user_role(
 
     return {"msg": "用户角色已成功更改"}
 
-
+@router.post("/setRecruitDeadline", tags=["admin"])
+def set_recruit_deadline(
+    data: SetRecruitDeadline
+):
+    deadline_str = data.deadline  
+    
+    try:
+        datetime.strptime(deadline_str, "%Y-%m-%d")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="日期格式错误，请使用 YYYY-MM-DD 格式")
+    
+    update_recruit_deadline(deadline_str)
+    
+    return {
+        "code": 200,
+        "message": "招新截止日期设置成功",
+        "data": {"deadline": deadline_str}
+    }

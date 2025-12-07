@@ -27,7 +27,10 @@ from datetime import datetime
 from misc.dingtalk import send_dingtalk_message_to_user
 from routes.admin import is_manager
 
+from config import get_config
+
 router = APIRouter()
+
 
 
 def matchTimeSlotFromDate(interview_date: datetime) -> str:
@@ -92,6 +95,19 @@ class ConfirmationMajor(BaseModel):
     major_name: str
     grade: int
 
+@router.get('/getDeadline')
+async def get_deadline():
+    settings = get_config()
+    deadline_str = settings.RECRUIT_DEADLINE 
+    
+    return {
+        "code": 200,
+        "message": "获取成功",
+        "data": {
+            "deadline": deadline_str  
+        }
+    }
+
 @router.post("/major_confirm")
 def confirm_major(data: ConfirmationMajor, db: Session = Depends(get_db)):
     csv_file_path = f"major/specialties_data_20{data.grade}.csv"
@@ -140,6 +156,22 @@ def confirm_recruit(data: RecruitItem, db: Session = Depends(get_db)):
     if existing_recruit:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This student ID has already submitted application information")
     
+    settings = get_config()
+    deadline_str = settings.RECRUIT_DEADLINE
+
+    try:
+        deadline_dt = datetime.strptime(deadline_str, "%Y-%m-%d")
+        end_of_day = deadline_dt.replace(hour=23, minute=59, second=59)
+        
+        if datetime.now() > end_of_day:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, 
+                detail=f"招新已于 {deadline_str} 截止，无法提交申请。"
+            )
+
+    except ValueError:
+        raise HTTPException(status_code=500, detail="服务器配置错误，请联系管理员。")
+
     if data.degree == 0:
         csv_file_path = f"major/specialties_data_20{data.grade}.csv"
         df = pd.read_csv(csv_file_path, dtype=str)
