@@ -86,6 +86,8 @@ def cleanup_unused_images(old_content: str, new_content: str, old_image: str = "
     return delete_image_files(unused_images)
 
 
+import shutil
+
 def cleanup_all_images(content: str, image: str = "") -> int:
     """
     清理内容中的所有图片文件（用于删除操作）
@@ -96,3 +98,36 @@ def cleanup_all_images(content: str, image: str = "") -> int:
     all_images = content_images | field_images
     
     return delete_image_files(all_images)
+
+
+def delete_draft_folder(type: str, id: int) -> int:
+    """
+    删除草稿对应的图片文件夹
+    type: 'news' or 'event'
+    id: nid or eid
+    返回删除的文件数量（估算）
+    """
+    count = 0
+    paths_to_check = []
+    
+    # 1. New structure: uploads/images/{type}/{id}
+    paths_to_check.append(IMAGES_DIR / type / str(id))
+    
+    # 2. Old structure (potential backward compatibility): uploads/images/{id}
+    # Only check this if type is news, as implied by upload.py logic, but safer to check both if needed.
+    # However, upload.py only checks (IMAGES_DIR / str(nid)) for news.
+    if type == 'news':
+        paths_to_check.append(IMAGES_DIR / str(id))
+        
+    for path in paths_to_check:
+        if path.exists() and path.is_dir():
+            try:
+                # Count files before deleting for reporting
+                for _ in path.glob('**/*'):
+                    if _.is_file():
+                        count += 1
+                shutil.rmtree(path)
+            except Exception as e:
+                print(f"Failed to delete draft folder {path}: {e}")
+                
+    return count

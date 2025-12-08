@@ -14,6 +14,9 @@ from misc.auth import (
 from models import get_db
 from models.user import User
 from models.event import Event
+from models.news import News
+from misc.image_manager import cleanup_all_images, delete_draft_folder
+import time
 from models.admin import Admin
 from models.role import Admin_Role, User_Role
 from models.relation.user_event import user_event
@@ -254,3 +257,58 @@ def set_recruit_deadline(
         "message": "招新截止日期设置成功",
         "data": {"deadline": deadline_str}
     }
+
+
+@router.post("/cleanup_drafts", tags=["admin"])
+def cleanup_drafts(
+    db: Session = Depends(get_db),
+    aid: str = Depends(get_current_admin),
+):
+    if not is_manager(db, aid):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Current administrator does not have permission to perform this operation"
+        )
+    
+    try:
+        # Define threshold (24 hours ago)
+        threshold = int(time.time()) - 86400
+        
+        # Clean News Drafts
+        news_drafts = db.query(News).filter(News.first_publish == 0, News.last_update < threshold).all()
+        news_count = 0
+        news_images_count = 0
+        
+        for draft in news_drafts:
+            # Clean images by deleting the entire folder
+            news_images_count += delete_draft_folder('news', draft.nid)
+            db.delete(draft)
+            news_count += 1
+            
+        # Clean Event Drafts
+        event_drafts = db.query(Event).filter(Event.first_publish == 0, Event.last_update < threshold).all()
+        event_count = 0
+        event_images_count = 0
+        
+        for draft in event_drafts:
+            # Clean images by deleting the entire folder
+            event_images_count += delete_draft_folder('event', draft.eid)
+            db.delete(draft)
+            event_count += 1
+            
+        db.commit()
+        
+        return {
+            "msg": "Cleanup successful",
+            "details": {
+                "news_deleted": news_count,
+                "news_images_cleaned": news_images_count,
+                "events_deleted": event_count,
+                "event_images_cleaned": event_images_count
+            }
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500, detail=f"An error occurred during cleanup: {e}"
+        )
