@@ -13,7 +13,7 @@ from markdown import markdown
 from html2text import HTML2Text
 
 from misc.model import aid_to_nick
-from misc.auth import get_current_user, get_current_admin, login_required_admin, hash_passwd
+from misc.auth import get_current_user, get_current_admin, login_required_admin, login_required_operator, hash_passwd
 from models import get_db
 from models.participation import Participation
 from models.relation.user_event import user_event
@@ -316,6 +316,7 @@ class RecruitResponse(BaseModel):
 def show_recruit_list(
     page: int = 1, size: int = 8, name: str = None, uid: str = None, degree: str = None, grade: str = None, major_name: str = None, status: str = None, department: str = None, all: bool = False,
     db: Session = Depends(get_db),
+    _: bool = Depends(login_required_operator),
 ):
     recruitments = db.query(Recruitment)
     if name:
@@ -473,6 +474,7 @@ class EvaluationListResponse(BaseModel):
 def get_evaluations(
     uid: str,
     db: Session = Depends(get_db),
+    _: bool = Depends(login_required_operator),
 ):
     
     evaluations = db.query(Evaluation).filter(Evaluation.uid == uid).order_by(Evaluation.evaluation_time.desc()).all()
@@ -511,6 +513,7 @@ class InterviewPassRequest(BaseModel):
 def interview_pass(
     request: InterviewPassRequest,
     db: Session = Depends(get_db),
+    _: bool = Depends(login_required_operator),
 ):
     
     try:
@@ -620,6 +623,7 @@ def interview_pass(
 def get_recruit_detail(
     uid: str,
     db: Session = Depends(get_db),
+    _: bool = Depends(login_required_operator),
 ):
     recruit = db.query(Recruitment).filter(Recruitment.uid == uid).first()
     if not recruit:
@@ -665,6 +669,7 @@ class FinalAcceptRequest(BaseModel):
 def final_accept(
     request: FinalAcceptRequest,
     db: Session = Depends(get_db),
+    _: bool = Depends(login_required_operator),
 ):
     vx_number = {
         'office' : 's1764958267',
@@ -802,6 +807,7 @@ def final_accept(
 def final_reject_candidate(
     request: FinalAcceptRequest,
     db: Session = Depends(get_db),
+    _: bool = Depends(login_required_operator),
 ):
     try:
         recruit = db.query(Recruitment).filter(Recruitment.uid == request.uid).first()
@@ -897,6 +903,7 @@ class DeleteRecruit(BaseModel):
 def assign_department(
     data: AssignDepartment,
     db: Session = Depends(get_db),
+    _: bool = Depends(login_required_operator),
 ):
     recruit = db.query(Recruitment).filter(Recruitment.uid == data.uid).first()
     if not recruit:
@@ -920,6 +927,7 @@ def assign_department(
 def delete_recruit(
     data: DeleteRecruit,
     db: Session = Depends(get_db),
+    _: bool = Depends(login_required_operator),
 ):
     recruit = db.query(Recruitment).filter(Recruitment.uid == data.uid).first()
     if not recruit:
@@ -953,6 +961,7 @@ def delete_recruit(
 @router.post("/delete_all_recruits", tags=["admin"])
 def delete_all_recruits(
     db: Session = Depends(get_db),
+    _: bool = Depends(login_required_operator),
 ):
     try:
         total_recruits = db.query(Recruitment).count()
@@ -989,6 +998,7 @@ from urllib.parse import quote
 @router.get("/export_recruits", tags=["admin"])
 def export_recruits(
     db: Session = Depends(get_db),
+    _: bool = Depends(login_required_operator),
     include_basic_info: str = "true",
     include_contact: str = "true",
     include_department_preference: str = "true",

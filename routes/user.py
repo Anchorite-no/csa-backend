@@ -17,6 +17,7 @@ from config import get_config
 from misc.auth import (
     create_access_token,
     get_current_user,
+    get_current_user_flexible,
     hash_passwd,
     verify_passwd,
     create_access_token_admin,
@@ -105,7 +106,7 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
     if not verify_passwd(data.passwd, user.passwd.encode("utf-8")):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password")
 
-    admin = db.query(Admin).filter_by(aid=data.uid).first()
+    admin = db.query(Admin).filter_by(uid=data.uid).first()
     
     if admin and admin.is_active:
         admin_token = create_access_token_admin(
@@ -180,7 +181,7 @@ def token(data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
 def passwd(
     data: UserPasswd,
     db: Session = Depends(get_db),
-    uid: str = Depends(get_current_user),
+    uid: str = Depends(get_current_user_flexible),
 ):
     user = db.query(User).filter_by(uid=uid).first()
 
@@ -338,7 +339,7 @@ class ParticipationResponse(BaseModel):
 
 @router.get("/participations", response_model=ParticipationResponse)
 def get_participations(
-    uid: str = Depends(get_current_user),
+    uid: str = Depends(get_current_user_flexible),
     page: int = 1,
     size: int = 8,
     db: Session = Depends(get_db),
@@ -379,7 +380,7 @@ def get_participations(
 
 @router.get("/available_event", response_model=ParticipationResponse)
 def get_available_event(
-    uid: str = Depends(get_current_user),
+    uid: str = Depends(get_current_user_flexible),
     db: Session = Depends(get_db),
 ):
     participations = (
@@ -417,7 +418,7 @@ def get_available_event(
 
 @router.get("/check_participation")
 def check_participation(
-    uid: str = Depends(get_current_user),
+    uid: str = Depends(get_current_user_flexible),
     eid: int = 0,
     db: Session = Depends(get_db),
 ):
@@ -461,7 +462,7 @@ class UpdateUserProfile(BaseModel):
 
 @router.get("/profile", response_model=UserProfile, tags=["user"])
 def get_user_profile(
-    uid: str = Depends(get_current_user),
+    uid: str = Depends(get_current_user_flexible),
     db: Session = Depends(get_db),
 ):
     """获取用户个人资料"""
@@ -513,7 +514,7 @@ def get_user_profile(
 @router.put("/profile", tags=["user"])
 def update_user_profile(
     data: UpdateUserProfile,
-    uid: str = Depends(get_current_user),
+    uid: str = Depends(get_current_user_flexible),
     db: Session = Depends(get_db),
 ):
     """
@@ -559,3 +560,50 @@ def update_user_profile(
     
     db.commit()
     return {"msg": "Profile updated successfully"}
+
+
+class AdminStatusResponse(BaseModel):
+    is_admin: bool
+    admin_role_id: Optional[int] = None
+    admin_role_name: Optional[str] = None
+    admin_token: Optional[str] = None
+
+
+@router.get("/admin_status", response_model=AdminStatusResponse, tags=["user"])
+def check_admin_status(
+    uid: str = Depends(get_current_user_flexible),
+    db: Session = Depends(get_db),
+):
+    """检查当前用户是否是管理员，如果是则返回管理员token"""
+    user = db.query(User).filter_by(uid=uid).first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # 查询是否是管理员
+    admin = db.query(Admin).filter_by(uid=uid).first()
+    
+    if admin and admin.is_active:
+        # 角色名称映射
+        role_names = {
+            7: "管理员",
+            8: "发布者",
+            9: "运维"
+        }
+        
+        # 生成管理员token
+        admin_token = create_access_token_admin(
+            aid=admin.aid, uid=user.uid, expires_delta=timedelta(hours=2), nick=user.nick
+        )
+        
+        return AdminStatusResponse(
+            is_admin=True,
+            admin_role_id=admin.role_id,
+            admin_role_name=role_names.get(admin.role_id, "未知角色"),
+            admin_token=admin_token
+        )
+    else:
+        return AdminStatusResponse(is_admin=False)
