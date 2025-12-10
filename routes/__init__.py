@@ -4,7 +4,13 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
-from misc.auth import login_required, login_required_admin
+from misc.auth import (
+    login_required, 
+    login_required_admin,
+    login_required_manager,
+    login_required_operator,
+    login_required_publisher
+)
 from config import get_version
 
 
@@ -57,54 +63,54 @@ def init_app_routes(app: FastAPI):
         edit_router,
         prefix="/api/edit",
         tags=["edit"],
-        dependencies=[Depends(login_required_admin)],
+        dependencies=[Depends(login_required_publisher)],
     )
     app.include_router(
         delete_router,
         prefix="/api/delete",
         tags=["delete"],
-        dependencies=[Depends(login_required_admin)],
+        dependencies=[Depends(login_required_publisher)],
     )
     app.include_router(
         admin_router,
         prefix="/api/admin",
         tags=["admin"],
-        dependencies=[Depends(login_required_admin)],
+        dependencies=[Depends(login_required_manager)],
     )
     
     app.include_router(
         dingtalk_router,
         prefix="/api/dingtalk",
         tags=["dingtalk"],
-        dependencies=[Depends(login_required_admin)],
+        dependencies=[Depends(login_required_operator)],
     )
     
     app.include_router(
         interview_router,
         prefix="/api/interview",
         tags=["interview"],
-        dependencies=[Depends(login_required_admin)],
+        dependencies=[Depends(login_required_operator)],
     )
     
     app.include_router(
         member_router,
         prefix="/api/member",
         tags=["member"],
-        dependencies=[Depends(login_required_admin)],
+        dependencies=[Depends(login_required_manager)],
     )
     
     app.include_router(
         upload_router,
         prefix="/api/upload",
         tags=["upload"],
-        dependencies=[Depends(login_required_admin)],
+        dependencies=[Depends(login_required_publisher)],
     )
 
     app.include_router(
         create_router,
         prefix="/api/create",
         tags=["create"],
-        dependencies=[Depends(login_required_admin)],
+        dependencies=[Depends(login_required_publisher)],
     )
     
     app.include_router(

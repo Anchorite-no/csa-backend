@@ -7,7 +7,7 @@ from markdown import markdown
 from html2text import HTML2Text
 
 from misc.model import aid_to_nick
-from misc.auth import get_current_user, login_required_admin
+from misc.auth import get_current_user, get_current_user_flexible, login_required_admin
 from models import get_db
 from models.participation import Participation
 from models.relation.user_event import user_event
@@ -166,7 +166,7 @@ class SignupItem(BaseModel):
 def sign_up(
     request: Request,
     data: SignupItem,
-    uid: str = Depends(get_current_user),
+    uid: str = Depends(get_current_user_flexible),
     db: Session = Depends(get_db),
 ):
     event = db.query(Event).filter_by(eid=data.eid).first()
@@ -213,7 +213,7 @@ class SignInItem(BaseModel):
 def sign_in(
     request: Request,
     data: SignInItem,
-    uid: str = Depends(get_current_user),
+    uid: str = Depends(get_current_user_flexible),
     db: Session = Depends(get_db),
 ):
     participation, event = (
