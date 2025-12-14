@@ -1,5 +1,5 @@
 import time
-from datetime import timedelta
+from datetime import timedelta, datetime
 from hashlib import sha256
 from typing import Annotated, Optional
 import smtplib
@@ -28,6 +28,7 @@ from models.participation import Participation
 from models.user import User
 from models.admin import Admin
 from models.member import Member
+from models.role import User_Role, Admin_Role
 
 router = APIRouter()
 
@@ -431,22 +432,28 @@ def check_participation(
 
 
 class UserProfile(BaseModel):
-    uid: str
-    nick: str
-    email: Optional[str] = None
-    name: Optional[str] = None
-    gender: Optional[str] = None  # '男' or '女'
-    phone: Optional[str] = None
-    wechat: Optional[str] = None
-    qq: Optional[str] = None
-    major_name: Optional[str] = None
-    college_name: Optional[str] = None
-    grade: Optional[int] = None
-    department: Optional[str] = None
-    position: Optional[str] = None
-    is_active: Optional[bool] = None
-    skills: Optional[str] = None
-    user_type: str = "会员"  # 用户类型：会员、干事
+    # === 基础信息（所有用户） ===
+    nick: str                         # 昵称
+    uid: str                          # 学号
+    email: Optional[str] = None       # 邮箱
+    role_name: str = "会员"           # 角色名称，通过 rid 映射
+    
+    # === 详细信息（仅Member） ===
+    name: Optional[str] = None        # 姓名
+    gender: Optional[str] = None      # 性别（男/女）
+    major_name: Optional[str] = None  # 专业
+    college_name: Optional[str] = None # 学院
+    grade: Optional[int] = None       # 年级
+    # 工作信息
+    department: Optional[str] = None  # 部门
+    position: Optional[str] = None    # 职位
+    is_active: Optional[bool] = None  # 在职状态
+    # 联系方式
+    phone: Optional[str] = None       # 电话
+    wechat: Optional[str] = None      # 微信
+    qq: Optional[str] = None          # QQ
+
+    skills: Optional[str] = None      # 技能特长
 
 
 class UpdateUserProfile(BaseModel):
@@ -467,47 +474,55 @@ def get_user_profile(
 ):
     """获取用户个人资料"""
     user = db.query(User).filter_by(uid=uid).first()
-    
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
+        raise HTTPException(status_code=404, detail="User not found")
     
-    # 根据 role_id 判断用户类型；下面只是我假定的，具体后续添加权限表后按实际修改，暂时只考虑会员和干事的展示逻辑
-    # 1=会员, 2=干事, 7=管理员
-    role_names = {1: "会员", 2: "干事"}
-    user_type = role_names.get(user.role_id, "会员")
+    # 通过 role_id 映射角色名称
+    admin = db.query(Admin).filter_by(uid=uid).first()
+    if admin and admin.is_active:
+        admin_roles = {
+            7: Admin_Role.ADMIN["role_name"],
+            8: Admin_Role.PUBLISHER["role_name"],
+            9: Admin_Role.OPERATOR["role_name"]
+        }
+        role_name = admin_roles.get(admin.role_id, "管理员")
+    else:
+        user_roles = {
+            1: User_Role.MEMBER["role_name"],
+            2: User_Role.OFFICER["role_name"],
+            3: User_Role.VICE_MINISTER["role_name"],
+            4: User_Role.MINISTER["role_name"],
+            5: User_Role.FINANCIAL_RESPONSIBLE["role_name"],
+            6: User_Role.PRESIDENT["role_name"]
+        }
+        role_name = user_roles.get(user.role_id, "会员")
     
-    # 基础资料来自User表（所有用户都有）
+    # 基础信息
     profile_data = {
         "uid": user.uid,
         "nick": user.nick,
         "email": user.email,
-        "user_type": user_type,
+        "role_name": role_name,
     }
-    # 如果是干事，尝试从Member表获取信息
-    if user.role_id == 2:
-        member = db.query(Member).filter_by(uid=uid).first()
-        if member:
-            profile_data.update({
-                "name": member.name,
-                "gender": "女" if member.render else "男",
-                "phone": member.phone,
-                "wechat": member.wechat,
-                "qq": member.qq,
-                "major_name": member.major_name,
-                "college_name": member.college_name,
-                "grade": member.grade,
-                "department": member.department,
-                "position": member.position,
-                "is_active": member.is_active,
-                "skills": member.skills,
-            })
-        else:
-            # TODO: 在 member 表中添加一条新记录？待确认
-            pass
-    # 如果member不存在，这些字段为None，前端会显示为"-"
+    
+    # 获取Member信息
+    member = db.query(Member).filter_by(uid=uid).first()
+    if member:
+        profile_data.update({
+            "name": member.name,
+            "gender": "女" if member.render else "男",
+            "phone": member.phone,
+            "wechat": member.wechat,
+            "qq": member.qq,
+            "major_name": member.major_name,
+            "college_name": member.college_name,
+            "grade": member.grade,
+            "department": member.department,
+            "position": member.position,
+            "is_active": member.is_active,
+            "skills": member.skills,
+        })
+    
     return UserProfile(**profile_data)
 
 
@@ -519,9 +534,9 @@ def update_user_profile(
 ):
     """
     更新用户个人资料
+    - 姓名、学号、性别、专业不可编辑
     - 所有用户可编辑 User 表字段（email）
     - 干事可额外编辑 Member 表字段（phone, wechat, qq, skills）
-    - 姓名、学号、性别、专业不可编辑
     """
     user = db.query(User).filter_by(uid=uid).first()
     
@@ -531,35 +546,54 @@ def update_user_profile(
             detail="User not found"
         )
     
-    # 更新 User 表字段（目前只有在对应表中确实存在的字段编辑后才可真正成功）
-    if data.email is not None:
+    # 更新邮箱
+    if data.email is not None and data.email != "":
         # 检查邮箱是否被占用
         existing = db.query(User).filter(User.email == data.email, User.uid != uid).first()
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already in use"
+                detail="邮箱已被使用"
             )
         user.email = data.email
+
+    # 更新 Member 表字段
+    has_member_fields = any([
+        data.phone is not None and data.phone != "",
+        data.wechat is not None and data.wechat != "",
+        data.qq is not None and data.qq != "",
+        data.skills is not None and data.skills != ""
+    ])
     
-    # 检查是否为干事，如果是则可以更新 Member 表字段
-    if user.role_id == 2:
+    if has_member_fields:
         member = db.query(Member).filter_by(uid=uid).first()
-        if member:
-            if data.phone is not None:
-                member.phone = data.phone
-            if data.wechat is not None:
-                member.wechat = data.wechat
-            if data.qq is not None:
-                member.qq = data.qq
-            if data.skills is not None:
-                member.skills = data.skills
-        else:
-            # 在 member 表中添加一条新记录？待确认
-            pass
+        
+        if not member:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="部分字段没能在对应数据库表中找到，请联系管理员"
+            )
+
+        if data.phone is not None and data.phone != "":
+            member.phone = data.phone
+        if data.wechat is not None and data.wechat != "":
+            member.wechat = data.wechat
+        if data.qq is not None and data.qq != "":
+            member.qq = data.qq
+        if data.skills is not None and data.skills != "":
+            member.skills = data.skills
+        member.updated_at = datetime.utcnow()
     
-    db.commit()
-    return {"msg": "Profile updated successfully"}
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"更新失败：{e}"
+        )
+    
+    return {"msg": "个人资料更新成功"}
 
 
 class AdminStatusResponse(BaseModel):
