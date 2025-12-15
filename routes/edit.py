@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from misc.auth import get_current_admin, get_current_user
+from misc.auth import get_current_user_flexible
 from misc.image_manager import cleanup_unused_images
 from models import get_db
 from models.event import Event
@@ -28,12 +28,9 @@ class EditNews(BaseModel):
 
 @router.post("/news")
 def edit_news(
-    data: EditNews, db: Session = Depends(get_db), aid: str = Depends(get_current_admin)
+    data: EditNews, db: Session = Depends(get_db),
+    publisher: str = Depends(get_current_user_flexible)
 ):
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Current user does not have permission to perform this operation"
-        )
 
     old_content = ""
     old_image = ""
@@ -57,7 +54,6 @@ def edit_news(
     news.last_update = int(time.time())
 
     try:
-        # Check if this is a draft being published for the first time
         if news.first_publish == 0:
             news.first_publish = int(time.time())
             
@@ -97,13 +93,7 @@ class EditEventCategory(BaseModel):
 def edit_event_category(
     data: EditEventCategory,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
 ):
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Current user does not have permission to perform this operation"
-        )
-
     if data.ecid:
         event_category = db.query(EventCategory).filter_by(ecid=data.ecid).first()
         if not event_category:
@@ -149,13 +139,8 @@ class EditEvent(BaseModel):
 def edit_event(
     data: EditEvent,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
 ):
     
-    
-    
-    
-    #     )
     first_publish = 0
 
     old_content = ""

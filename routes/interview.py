@@ -673,7 +673,6 @@ def get_schedule_statistics(
     db: Session = Depends(get_db),
     
 ):
-    
     try:
         total_recruits = db.query(Recruitment).count()
         
@@ -858,7 +857,6 @@ def delete_interview_schedule(
 def get_recruit_time_slots(
     uid: str,
     db: Session = Depends(get_db),
-    
 ):
     
     try:
@@ -910,7 +908,6 @@ def format_time_slots(time_slots):
 def get_recruit_info(
     uid: str,
     db: Session = Depends(get_db),
-    
 ):
     
     try:
@@ -947,7 +944,6 @@ def get_recruit_info(
 @router.get("/schedule_stats", tags=["interview"])
 def get_schedule_statistics(
     db: Session = Depends(get_db),
-    
 ):
     
     try:
@@ -995,7 +991,6 @@ class BatchInterviewUpdate(BaseModel):
 def batch_update_interviews(
     data: BatchInterviewUpdate,
     db: Session = Depends(get_db),
-    
 ):
     
     try:
@@ -1025,7 +1020,6 @@ class ScheduleNotification(BaseModel):
 def send_schedule_notification(
     notification_data: ScheduleNotification,
     db: Session = Depends(get_db),
-    
 ):
     
     try:

@@ -4,7 +4,6 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 from datetime import datetime
 
-from misc.auth import get_current_admin
 from models import get_db
 from models.member import Member
 from models.recruit import Recruitment
@@ -92,7 +91,6 @@ def get_members(
     page: int = 1,
     size: int = 20,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
 ):
     """获取干事列表"""
     query = db.query(Member)
@@ -147,7 +145,6 @@ def get_members(
 def get_member_detail(
     uid: str,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
 ):
     """获取干事详情"""
     member = db.query(Member).filter(Member.uid == uid).first()
@@ -186,7 +183,6 @@ def get_member_detail(
 def create_member(
     data: MemberCreate,
     db: Session = Depends(get_db),
-    
 ):
     """创建干事（从纳新者迁移）"""
     existing_member = db.query(Member).filter(Member.uid == data.uid).first()
@@ -231,7 +227,6 @@ def update_member(
     uid: str,
     data: MemberUpdate,
     db: Session = Depends(get_db),
-    
 ):
     """更新干事信息"""
     member = db.query(Member).filter(Member.uid == uid).first()
@@ -257,7 +252,6 @@ def update_member(
 def delete_member(
     uid: str,
     db: Session = Depends(get_db),
-    
 ):
     """删除干事"""
     member = db.query(Member).filter(Member.uid == uid).first()
@@ -276,7 +270,6 @@ def delete_member(
 @router.get("/members/stats", tags=["member"])
 def get_member_stats(
     db: Session = Depends(get_db),
-    
 ):
     """获取干事统计信息"""
     department_stats = {}

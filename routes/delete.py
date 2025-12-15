@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from misc.auth import get_current_admin
+from misc.auth import get_current_user_flexible
 from misc.image_manager import cleanup_all_images
 from models import get_db
 from models.event import Event
@@ -49,8 +49,6 @@ def delete_news(
         db.delete(news)
         db.commit()
         
-        # Try to delete the entire directory for this news
-        # Check for new structure (uploads/images/news/{nid})
         news_img_dir_new = IMAGES_DIR / 'news' / str(data.nid)
         if news_img_dir_new.exists() and news_img_dir_new.is_dir():
             try:
@@ -59,7 +57,6 @@ def delete_news(
             except Exception as e:
                 print(f"Failed to delete new image directory {news_img_dir_new}: {e}")
 
-        # Check for legacy structure (uploads/images/{nid})
         news_img_dir_legacy = IMAGES_DIR / str(data.nid)
         if news_img_dir_legacy.exists() and news_img_dir_legacy.is_dir():
             try:
@@ -68,7 +65,6 @@ def delete_news(
             except Exception as e:
                 print(f"Failed to delete legacy image directory {news_img_dir_legacy}: {e}")
 
-        # Legacy cleanup for old images not in nid directory
         deleted_count = cleanup_all_images(content, image)
         if deleted_count > 0:
             print(f"Cleaned up {deleted_count} image files when deleting news")
@@ -87,14 +83,7 @@ def delete_news(
 def delete_event(
     data: DeleteEventCategory,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin)
 ):
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Current administrator does not have permission to perform this operation"
-        )
-
     event_category = db.query(EventCategory).filter_by(ecid=data.ecid).first()
     if not event_category:
         raise HTTPException(

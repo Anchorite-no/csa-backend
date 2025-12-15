@@ -51,7 +51,12 @@ def extract_archive(file_path: Path, extract_to: Path) -> bool:
 
 
 def validate_structure(extract_path: Path) -> tuple[bool, str, Optional[Path]]:
-    md_files = list(extract_path.glob("**/*.md")) # 递归搜索所有子目录
+    md_files = []
+    for file_path in extract_path.glob("**/*.md"):
+        if "__MACOSX" not in str(file_path):
+            md_files.append(file_path)
+    # print(md_files)
+    
     if not md_files:
         return False, "未找到markdown文件", None
     
@@ -59,13 +64,6 @@ def validate_structure(extract_path: Path) -> tuple[bool, str, Optional[Path]]:
         return False, "找到多个markdown文件，请确保只有一个", None
     
     md_file = md_files[0]
-    
-    """ 不再强制要求img文件夹
-    img_dir = extract_path / "img"
-    if not img_dir.exists() or not img_dir.is_dir():
-        return False, "未找到img文件夹", None
-    """
-
     return True, "", md_file
 
 ALLOWED_IMAGE_EXTENSIONS = {

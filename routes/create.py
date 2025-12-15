@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from misc.auth import get_current_admin, get_current_admin_uid
+from misc.auth import get_current_admin, get_current_user_flexible
 from models import get_db
 from models.event import Event
 from models.event_category import EventCategory
@@ -39,7 +39,7 @@ class CreateEvent(BaseModel):
 @router.post("/news/draft")
 def create_news_draft(
     db: Session = Depends(get_db),
-    publisher: str = Depends(get_current_admin_uid)
+    publisher: str = Depends(get_current_user_flexible)
 ):
     try:
         # Create a draft news with first_publish=0
@@ -65,7 +65,7 @@ def create_news_draft(
 def create_news(
     data: CreateNews,
     db: Session = Depends(get_db),
-    publisher: str = Depends(get_current_admin_uid)
+    publisher: str = Depends(get_current_user_flexible)
 ):
     try:
         new_news = News(
@@ -90,7 +90,7 @@ def create_news(
 @router.post("/event/draft")
 def create_event_draft(
     db: Session = Depends(get_db),
-    publisher: str = Depends(get_current_admin_uid)
+    publisher: str = Depends(get_current_user_flexible)
 ):
     try:
         # Create a draft event with first_publish=0
@@ -121,13 +121,13 @@ def create_event_draft(
 def create_event_category(
         data: CreateEventCategory,
         db: Session = Depends(get_db),
-        aid: str = Depends(get_current_admin)
+        aid: str = Depends(get_current_user_flexible)
 ):
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Current user does not have permission to perform this operation"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN,
+    #         detail="Current user does not have permission to perform this operation"
+    #     )
 
     try:
         existing_event_category = db.query(EventCategory).filter(
@@ -151,14 +151,14 @@ def create_event_category(
 def create_event(
     data: CreateEvent,
     db: Session = Depends(get_db),
-    aid: str = Depends(get_current_admin),
-    publisher: str = Depends(get_current_admin)
+    aid: str = Depends(get_current_user_flexible),
+    publisher: str = Depends(get_current_user_flexible)
 ):
-    if not is_manager(db, aid):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Current user does not have permission to perform this operation"
-        )
+    # if not is_manager(db, aid):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN,
+    #         detail="Current user does not have permission to perform this operation"
+    #     )
     
     try:
         new_event = Event(
