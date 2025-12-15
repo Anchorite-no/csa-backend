@@ -99,7 +99,14 @@ def get_event_detail(eid: str, db: Session = Depends(get_db)):
 
     event = vars(event)
 
-    event["publisher"] = aid_to_nick(db, event["publisher"])
+    # 处理 publisher 字段，如果为 None 或转换失败，使用默认值
+    publisher_aid = event.get("publisher")
+    if publisher_aid:
+        publisher_nick = aid_to_nick(db, publisher_aid)
+        event["publisher"] = publisher_nick if publisher_nick else "未知"
+    else:
+        event["publisher"] = "未知"
+    
     event["category"] = event["ecid"]
 
     event_detail = EventDetail(**event)

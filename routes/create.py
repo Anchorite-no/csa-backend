@@ -182,3 +182,4 @@ def create_event(
         db.rollback()
         raise HTTPException(
             status_code=500, detail=f"An error occurred when creating event: {e}")
+
