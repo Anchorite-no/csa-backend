@@ -140,6 +140,9 @@ class RecruitItem(BaseModel):
     render: bool
     uid: Annotated[str, StringConstraints(pattern=r"^\d{1,10}$")]
     major_name: str
+    major_id: Optional[str] = None
+    college_id: Optional[str] = None
+    college_name: Optional[str] = None
     degree: Annotated[int, Field(ge=0, le=4)]
     grade: Annotated[int, Field(ge=21, le=25)]
     phone: Annotated[str, StringConstraints(pattern=r"^1[3-9]\d{9}$")]
@@ -157,37 +160,21 @@ class RecruitItem(BaseModel):
 def confirm_recruit(data: RecruitItem, db: Session = Depends(get_db)):
     existing_recruit = db.query(Recruitment).filter(Recruitment.uid == data.uid).first()
     if existing_recruit:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This student ID has already submitted application information")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="该学号已提交过报名信息")
     
-    settings = get_config()
-    deadline_str = settings.RECRUIT_DEADLINE
-
-    try:
-        deadline_dt = datetime.strptime(deadline_str, "%Y-%m-%d")
-        end_of_day = deadline_dt.replace(hour=23, minute=59, second=59)
-        
-        if datetime.now() > end_of_day:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, 
-                detail=f"招新已于 {deadline_str} 截止，无法提交申请。"
-            )
-
-    except ValueError:
-        raise HTTPException(status_code=500, detail="服务器配置错误，请联系管理员。")
-
     if data.degree == 0:
         csv_file_path = f"major/specialties_data_20{data.grade}.csv"
         df = pd.read_csv(csv_file_path, dtype=str)
         
         if data.major_name not in df['major_name'].values:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Major does not exist")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="专业不存在")
         
         major_id = df[df['major_name'] == data.major_name]['major_id'].values[0]
         college_id = df[df['major_name'] == data.major_name]['college_id'].values[0]
         college_name = df[df['major_name'] == data.major_name]['college_name'].values[0]
         
         if data.major_id != major_id or data.college_id != college_id or data.college_name != college_name:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Major or college information does not match")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="专业或学院信息不匹配")
     else:
         major_id = data.major_id if data.major_id else "DEFAULT_MASTER_PHD"
         college_id = data.college_id if data.college_id else "DEFAULT_COLLEGE"
@@ -209,6 +196,7 @@ def confirm_recruit(data: RecruitItem, db: Session = Depends(get_db)):
         activity_department_willing=data.activity_department_willing,
         research_department_willing=data.research_department_willing,
         if_agree_to_be_reassigned=data.if_agree_to_be_reassigned,
+        interview_time_slots=json.dumps(data.interview_time_slots),
         if_be_member=data.if_be_member,
         introduction=data.introduction,
         skill=data.skill,
@@ -249,6 +237,7 @@ async def upload_resume(
     resume_file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
+    MAX_FILE_SIZE = 10 * 1024 * 1024
     if not uid or not uid.isdigit() or len(uid) > 10:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid student ID format")
     
@@ -502,12 +491,9 @@ def get_evaluations(
     
     return EvaluationListResponse(evaluations=evaluation_list, total=len(evaluation_list))
 
-
-
-
 class InterviewPassRequest(BaseModel):
     uid: str
-
+    round_type: str
 
 @router.post("/interview-pass", tags=["recruit"])
 def interview_pass(
@@ -583,8 +569,6 @@ def interview_pass(
 如有任何疑问，请通过以下方式联系我们：
 • 邮箱：csa@zju.edu.cn
 
-恭喜你成功完成所有面试环节！我们期待你成为ZJUCSA大家庭的一员！
-
 连心为网，筑梦为安！
 浙江大学学生网络空间安全协会（ZJUCSA）"""
         
@@ -614,10 +598,6 @@ def interview_pass(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error occurred when processing interview pass: {e}"
         )
-
-
-
-
 
 @router.get("/recruit-detail/{uid}", tags=["recruit"])
 def get_recruit_detail(
@@ -767,6 +747,8 @@ def final_accept(
 •协会官网: csa.zju.edu.cn
 •你的账号: {recruit.uid}
 •你的密码: {raw_password}
+此密码为默认密码，请尽快修改密码！
+登陆路由：https://csa.zju.edu.cn/login
 
 【后续安排】
 请添加部门部长微信: {vx_number[request.department]}

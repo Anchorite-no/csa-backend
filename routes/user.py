@@ -186,7 +186,12 @@ def passwd(
 ):
     user = db.query(User).filter_by(uid=uid).first()
 
-    if not verify_passwd(data.old, user.passwd):
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+
+    if not verify_passwd(data.old, user.passwd.encode("utf-8")):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect original password"
         )
