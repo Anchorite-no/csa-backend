@@ -96,7 +96,14 @@ def get_members(
     query = db.query(Member)
     
     if department:
-        query = query.filter(Member.department == department)
+        mapping = {
+            'office': ['office', '办公室', '办公室部'],
+            'competition': ['competition', '竞赛', '竞赛部'],
+            'research': ['research', '科研', '科研部'],
+            'activity': ['activity', '活动', '活动部']
+        }
+        aliases = mapping.get(department.lower(), [department])
+        query = query.filter(Member.department.in_(aliases))
     if is_active is not None:
         query = query.filter(Member.is_active == is_active)
     
@@ -189,6 +196,8 @@ def create_member(
     if existing_member:
         raise HTTPException(status_code=400, detail="This member already exists")
     
+    std_department = data.department.strip().lower()
+
     member = Member(
         uid=data.uid,
         name=data.name,
@@ -200,7 +209,7 @@ def create_member(
         grade=data.grade,
         phone=data.phone,
         degree=data.degree,
-        department=data.department,
+        department=std_department,
         position=data.position,
         bank_card=data.bank_card,
         bank_name=data.bank_name,
@@ -268,26 +277,31 @@ def delete_member(
         raise HTTPException(status_code=500, detail=f"Failed to delete member: {str(e)}")
 
 @router.get("/members/stats", tags=["member"])
-def get_member_stats(
-    db: Session = Depends(get_db),
-):
+def get_member_stats(db: Session = Depends(get_db)):
     """获取干事统计信息"""
     department_stats = {}
-    departments = ['office', 'competition', 'research', 'activity']
     
-    for dept in departments:
-        total = db.query(Member).filter(Member.department == dept).count()
+    mapping = {
+        'office': ['office', '办公室', '办公室部'],
+        'competition': ['competition', '竞赛', '竞赛部'],
+        'research': ['research', '科研', '科研部'],
+        'activity': ['activity', '活动', '活动部']
+    }
+    
+    for key, aliases in mapping.items():
+        total = db.query(Member).filter(Member.department.in_(aliases)).count()
         active = db.query(Member).filter(
-            Member.department == dept,
+            Member.department.in_(aliases), 
             Member.is_active == True
         ).count()
         
-        department_stats[dept] = {
+        department_stats[key] = {
             "total": total,
             "active": active,
             "inactive": total - active
         }
     
+    # 统计全局总数
     total_members = db.query(Member).count()
     active_members = db.query(Member).filter(Member.is_active == True).count()
     
