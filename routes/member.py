@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from typing import List, Optional
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from datetime import datetime
 
@@ -32,6 +33,9 @@ class MemberCreate(BaseModel):
     qq: Optional[str] = None
     notes: Optional[str] = None
     skills: Optional[str] = None
+    is_active: bool = True
+    work_hours: float = 0.0
+    performance_score: float = 0.0
 
 class MemberUpdate(BaseModel):
     name: Optional[str] = None
@@ -88,12 +92,21 @@ class MemberResponse(BaseModel):
 def get_members(
     department: Optional[str] = None,
     is_active: Optional[bool] = None,
+    name: Optional[str] = None,
+    uid: Optional[str] = None,
     page: int = 1,
     size: int = 20,
     db: Session = Depends(get_db),
 ):
     """获取干事列表"""
     query = db.query(Member)
+
+    if name and name.strip():
+        n = name.strip()
+        query = query.filter(func.lower(Member.name).like(f"%{n.lower()}%"))
+    if uid and uid.strip():
+        u = uid.strip()
+        query = query.filter(Member.uid.like(f"%{u}%"))
     
     if department:
         mapping = {
@@ -146,6 +159,41 @@ def get_members(
         "total": total,
         "page": page,
         "size": size
+    }
+
+@router.get("/members/stats", tags=["member"])
+def get_member_stats(db: Session = Depends(get_db)):
+    """获取干事统计信息（须注册在 /members/{uid} 之前，否则 stats 会被当成 uid）"""
+    department_stats = {}
+
+    mapping = {
+        'office': ['office', '办公室', '办公室部'],
+        'competition': ['competition', '竞赛', '竞赛部'],
+        'research': ['research', '科研', '科研部'],
+        'activity': ['activity', '活动', '活动部']
+    }
+
+    for key, aliases in mapping.items():
+        total = db.query(Member).filter(Member.department.in_(aliases)).count()
+        active = db.query(Member).filter(
+            Member.department.in_(aliases),
+            Member.is_active == True
+        ).count()
+
+        department_stats[key] = {
+            "total": total,
+            "active": active,
+            "inactive": total - active
+        }
+
+    total_members = db.query(Member).count()
+    active_members = db.query(Member).filter(Member.is_active == True).count()
+
+    return {
+        "total_members": total_members,
+        "active_members": active_members,
+        "inactive_members": total_members - active_members,
+        "department_stats": department_stats
     }
 
 @router.get("/members/{uid}", tags=["member"])
@@ -218,7 +266,11 @@ def create_member(
         wechat=data.wechat,
         qq=data.qq,
         notes=data.notes,
-        skills=data.skills
+        skills=data.skills,
+        is_active=data.is_active,
+        work_hours=data.work_hours,
+        performance_score=data.performance_score,
+        evaluation_count=0,
     )
     
     try:
@@ -242,7 +294,7 @@ def update_member(
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
     
-    update_data = data.dict(exclude_unset=True)
+    update_data = data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(member, field, value)
     
@@ -275,39 +327,3 @@ def delete_member(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to delete member: {str(e)}")
-
-@router.get("/members/stats", tags=["member"])
-def get_member_stats(db: Session = Depends(get_db)):
-    """获取干事统计信息"""
-    department_stats = {}
-    
-    mapping = {
-        'office': ['office', '办公室', '办公室部'],
-        'competition': ['competition', '竞赛', '竞赛部'],
-        'research': ['research', '科研', '科研部'],
-        'activity': ['activity', '活动', '活动部']
-    }
-    
-    for key, aliases in mapping.items():
-        total = db.query(Member).filter(Member.department.in_(aliases)).count()
-        active = db.query(Member).filter(
-            Member.department.in_(aliases), 
-            Member.is_active == True
-        ).count()
-        
-        department_stats[key] = {
-            "total": total,
-            "active": active,
-            "inactive": total - active
-        }
-    
-    # 统计全局总数
-    total_members = db.query(Member).count()
-    active_members = db.query(Member).filter(Member.is_active == True).count()
-    
-    return {
-        "total_members": total_members,
-        "active_members": active_members,
-        "inactive_members": total_members - active_members,
-        "department_stats": department_stats
-    }
