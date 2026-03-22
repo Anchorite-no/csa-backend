@@ -8,6 +8,7 @@ from io import BytesIO
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status, UploadFile, File
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, StringConstraints
+from sqlalchemy import asc, case, desc
 from sqlalchemy.orm import Session
 from markdown import markdown
 from html2text import HTML2Text
@@ -304,6 +305,7 @@ class RecruitResponse(BaseModel):
 @router.get("/recruits", response_model=RecruitResponse, tags=["admin"])
 def show_recruit_list(
     page: int = 1, size: int = 8, name: str = None, uid: str = None, degree: str = None, grade: str = None, major_name: str = None, status: str = None, department: str = None, all: bool = False,
+    sort_field: str = None, sort_order: str = "asc",
     db: Session = Depends(get_db),
     _: bool = Depends(login_required_operator),
 ):
@@ -340,8 +342,43 @@ def show_recruit_list(
             recruitments = recruitments.filter(Recruitment.is_admitted == True)
     if department and department != 'all':
         recruitments = recruitments.filter(Recruitment.assigned_department == department)
-    
+
     total = recruitments.count()
+
+    order_direction = desc if sort_order == "desc" else asc
+    status_rank = case(
+        (Recruitment.is_admitted == True, 5),
+        (Recruitment.evaluation_status == 'rejected', 4),
+        (Recruitment.second_round_passed == True, 3),
+        (Recruitment.first_round_passed == True, 2),
+        else_=1,
+    )
+    sort_column_map = {
+        "name": Recruitment.name,
+        "uid": Recruitment.uid,
+        "render": Recruitment.render,
+        "degree": Recruitment.degree,
+        "grade": Recruitment.grade,
+        "major_name": Recruitment.major_name,
+        "college_name": Recruitment.college_name,
+        "assigned_department": Recruitment.assigned_department,
+        "status": status_rank,
+    }
+
+    if sort_field == "department_preference":
+        preference_columns = [
+            Recruitment.office_department_willing,
+            Recruitment.competition_department_willing,
+            Recruitment.research_department_willing,
+            Recruitment.activity_department_willing,
+        ]
+        recruitments = recruitments.order_by(
+            *(order_direction(column) for column in preference_columns),
+            asc(Recruitment.uid),
+        )
+    else:
+        sort_column = sort_column_map.get(sort_field, Recruitment.uid)
+        recruitments = recruitments.order_by(order_direction(sort_column), asc(Recruitment.uid))
     
     if not all:
         recruitments = recruitments.offset((page - 1) * size).limit(size)
