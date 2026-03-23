@@ -179,3 +179,10 @@ test/*
 .idea/*
 __pycache__/*
 *.db
+
+# Local development patches and helpers
+scripts/seed_demo_data.py
+AGENTS.md
+config.py
+misc/dingtalk.py
+requirements.txt
