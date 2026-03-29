@@ -1,0 +1,15 @@
+#!/bin/sh
+set -eu
+
+repo_root="$(git rev-parse --show-toplevel)"
+script="$repo_root/scripts/git/git-guard.ps1"
+stdin_file="$(mktemp)"
+
+trap 'rm -f "$stdin_file"' EXIT HUP INT TERM
+cat > "$stdin_file"
+
+status=0
+powershell -NoProfile -ExecutionPolicy Bypass -File "$script" hook-pre-push -RemoteName "$1" -RemoteUrl "$2" -StdinFile "$stdin_file" || status=$?
+rm -f "$stdin_file"
+trap - EXIT HUP INT TERM
+exit "$status"

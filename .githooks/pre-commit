@@ -1,0 +1,7 @@
+#!/bin/sh
+set -eu
+
+repo_root="$(git rev-parse --show-toplevel)"
+script="$repo_root/scripts/git/git-guard.ps1"
+
+exec powershell -NoProfile -ExecutionPolicy Bypass -File "$script" hook-pre-commit
