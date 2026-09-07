@@ -40,3 +40,15 @@ Uvicorn fixture; no production data or notifications are used:
 ```sh
 python -m unittest tests.test_recruit_deadline -v
 ```
+
+## New enrollment cohorts
+
+The public `/api/recruit/options` endpoint supplies the current Beijing year,
+valid enrollment grades, and the grades with an installed official major CSV.
+For a cohort without a catalog (including 2026 at this deployment), applicants
+enter their actual major and college. No older cohort's catalog or identifiers
+are substituted. The database stores null major/college identifiers and the
+admin API/UI marks these undergraduate entries as requiring verification.
+Adding a verified `major/specialties_data_2026.csv` automatically enables catalog
+selection for subsequent applications; previously hand-entered records remain
+marked for verification.

@@ -7,7 +7,7 @@ from typing import Optional, List, Annotated
 from io import BytesIO
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status, UploadFile, File
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field, StringConstraints
+from pydantic import BaseModel, Field, StringConstraints, field_validator
 from sqlalchemy import asc, case, desc
 from sqlalchemy.orm import Session
 from markdown import markdown
@@ -29,6 +29,7 @@ from misc.dingtalk import send_dingtalk_message_to_user
 from routes.admin import is_manager
 
 from misc.recruit_deadline import deadline_status, require_recruitment_open
+from misc.recruit_options import recruitment_options, undergraduate_major, validate_enrollment_grade
 
 router = APIRouter()
 
@@ -66,6 +67,11 @@ RESUME_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 class FuzzySearchMajor(BaseModel):
     major_name: str
     grade: int
+
+
+@router.get("/options")
+def get_recruitment_options():
+    return recruitment_options()
 
 @router.post("/major_search")
 def fuzzy_search_major(data: FuzzySearchMajor, db: Session = Depends(get_db)):
@@ -128,7 +134,7 @@ def confirm_major(data: ConfirmationMajor, db: Session = Depends(get_db)):
     
     return results_list
 
-class RecruitItem(BaseModel):
+class RecruitApplication(BaseModel):
     name: Annotated[str, StringConstraints(max_length=12)]
     render: bool
     uid: Annotated[str, StringConstraints(pattern=r"^\d{1,10}$")]
@@ -137,7 +143,7 @@ class RecruitItem(BaseModel):
     college_id: Optional[str] = None
     college_name: Optional[str] = None
     degree: Annotated[int, Field(ge=0, le=4)]
-    grade: Annotated[int, Field(ge=21, le=25)]
+    grade: Annotated[int, Field(ge=21)]
     phone: Annotated[str, StringConstraints(pattern=r"^1[3-9]\d{9}$")]
     office_department_willing: Annotated[int, Field(ge=1, le=4)]
     competition_department_willing: Annotated[int, Field(ge=1, le=4)]
@@ -149,26 +155,24 @@ class RecruitItem(BaseModel):
     skill: Annotated[str, StringConstraints(max_length=250)]
     interview_time_slots: List[str] = Field(default_factory=list, description="Interview time slot selection")
 
+    @field_validator("grade")
+    @classmethod
+    def valid_grade(cls, value):
+        return validate_enrollment_grade(value)
+
 @router.post("/recruit_confirm")
-def confirm_recruit(data: RecruitItem, db: Session = Depends(get_db)):
+def confirm_recruit(data: RecruitApplication, db: Session = Depends(get_db)):
     require_recruitment_open(db)
     existing_recruit = db.query(Recruitment).filter(Recruitment.uid == data.uid).first()
     if existing_recruit:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="该学号已提交过报名信息")
     
     if data.degree == 0:
-        csv_file_path = f"major/specialties_data_20{data.grade}.csv"
-        df = pd.read_csv(csv_file_path, dtype=str)
-        
-        if data.major_name not in df['major_name'].values:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="专业不存在")
-        
-        major_id = df[df['major_name'] == data.major_name]['major_id'].values[0]
-        college_id = df[df['major_name'] == data.major_name]['college_id'].values[0]
-        college_name = df[df['major_name'] == data.major_name]['college_name'].values[0]
-        
-        if data.major_id != major_id or data.college_id != college_id or data.college_name != college_name:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="专业或学院信息不匹配")
+        academic = undergraduate_major(data)
+        major_id = academic["major_id"]
+        college_id = academic["college_id"]
+        college_name = academic["college_name"]
+        data.major_name = academic["major_name"]
     else:
         major_id = data.major_id if data.major_id else "DEFAULT_MASTER_PHD"
         college_id = data.college_id if data.college_id else "DEFAULT_COLLEGE"
@@ -290,6 +294,7 @@ class RecruitItem(BaseModel):
     is_admitted: bool = False
     admission_time: Optional[datetime] = None
     evaluation_status: str = "pending"
+    major_verification_required: bool = False
 
 class RecruitResponse(BaseModel):
     recruits: list[RecruitItem]
@@ -404,6 +409,7 @@ def show_recruit_list(
             is_admitted=recruit.is_admitted or False,
             evaluation_status=recruit.evaluation_status or 'pending',
             admission_time=recruit.admission_time,
+            major_verification_required=recruit.degree == 0 and not recruit.major_id,
         ))
     
     return RecruitResponse(recruits=result_list, total=total)
@@ -647,6 +653,7 @@ def get_recruit_detail(
         "phone": recruit.phone,
         "major_name": recruit.major_name,
         "college_name": recruit.college_name,
+        "major_verification_required": recruit.degree == 0 and not recruit.major_id,
         "grade": recruit.grade,
         "degree": recruit.degree,
         "introduction": recruit.introduction,

@@ -21,6 +21,9 @@ from misc.recruit_deadline import (
     set_recruit_deadline,
 )
 from models.site_setting import SiteSetting
+from models.recruit import Recruitment
+from misc.recruit_options import undergraduate_major, validate_enrollment_grade
+from routes.recruit import RecruitApplication
 
 
 class DeadlineTest(unittest.TestCase):
@@ -29,6 +32,7 @@ class DeadlineTest(unittest.TestCase):
         self.url = "sqlite:///" + str(Path(self.temp.name) / "settings.sqlite")
         self.engine = create_engine(self.url)
         SiteSetting.__table__.create(self.engine)
+        Recruitment.__table__.create(self.engine)
 
     def tearDown(self):
         self.engine.dispose()
@@ -62,6 +66,21 @@ class DeadlineTest(unittest.TestCase):
                 with self.assertRaises(HTTPException) as error:
                     require_recruitment_open(None)
                 self.assertEqual(error.exception.status_code, 403)
+
+    def test_new_cohort_and_manual_major_validation(self):
+        with patch("misc.recruit_options.current_enrollment_year", return_value=2026):
+            self.assertEqual(validate_enrollment_grade(26), 26)
+            with self.assertRaises(ValueError):
+                validate_enrollment_grade(27)
+        with patch("misc.recruit_options.CATALOG_DIR", Path(self.temp.name)):
+            details = undergraduate_major(SimpleNamespace(
+                grade=26, major_name="  网络空间安全 ", college_name="计算机科学与技术学院",
+            ))
+            self.assertEqual(details["major_name"], "网络空间安全")
+            self.assertIsNone(details["major_id"])
+            self.assertIsNone(details["college_id"])
+            with self.assertRaises(HTTPException):
+                undergraduate_major(SimpleNamespace(grade=26, major_name="专业", college_name=""))
 
     def test_four_uvicorn_workers_see_updates_without_restart(self):
         with Session(self.engine) as db:
@@ -122,6 +141,24 @@ class DeadlineTest(unittest.TestCase):
             self.assertEqual(request(body={"deadline": "2099-09-30T23:59+08:00"})[0], 200)
             new_workers = sample("2099-09-30T23:59:00+08:00", True)
             self.assertEqual(old_workers, new_workers)
+            _, _, options = request("/options")
+            self.assertIn(26, options["grades"])
+            payload = {
+                "name": "Test", "render": True, "uid": "1234567890",
+                "major_name": "网络空间安全", "college_name": "计算机科学与技术学院",
+                "degree": 0, "grade": 26, "phone": "13800000000",
+                "office_department_willing": 1, "competition_department_willing": 2,
+                "activity_department_willing": 3, "research_department_willing": 4,
+                "if_agree_to_be_reassigned": True, "if_be_member": True,
+                "introduction": "", "skill": "",
+            }
+            self.assertEqual(request("/recruit", payload)[0], 200)
+            with Session(self.engine) as db:
+                recruit = db.get(Recruitment, "1234567890")
+                self.assertEqual(recruit.grade, 26)
+                self.assertEqual(recruit.college_name, "计算机科学与技术学院")
+                self.assertIsNone(recruit.major_id)
+                self.assertIsNone(recruit.college_id)
             self.assertEqual(request(body={"deadline": "2026-02-30"})[0], 400)
             self.assertEqual(request(body={"deadline": "2000-01-01"})[0], 200)
             self.assertEqual(sample("2000-01-01T23:59:00+08:00", False), old_workers)

@@ -8,7 +8,11 @@ from sqlalchemy.orm import sessionmaker
 
 from models import get_db
 from routes.admin import set_recruit_deadline
-from routes.recruit import get_deadline, confirm_recruit
+from routes.recruit import get_deadline, confirm_recruit, get_recruitment_options
+import routes.recruit as recruit_routes
+
+# Successful application tests must never contact real recipients.
+recruit_routes.send_dingtalk_message_to_user = lambda **kwargs: True
 
 engine = create_engine(
     os.environ["CSA_DEADLINE_TEST_DB_URL"], connect_args={"check_same_thread": False}
@@ -34,6 +38,7 @@ app.add_api_route(
     dependencies=[Depends(test_admin)],
 )
 app.add_api_route("/recruit", confirm_recruit, methods=["POST"])
+app.add_api_route("/options", get_recruitment_options, methods=["GET"])
 
 
 @app.middleware("http")
