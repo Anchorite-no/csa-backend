@@ -39,6 +39,7 @@ from models.relation.user_roles import user_role_association
 from models.interview import Interview, InterviewTimeSlot
 from models.recruit import Recruitment, Evaluation
 from models.member import Member
+from models.site_setting import SiteSetting
 
 target_metadata = Base.metadata
 

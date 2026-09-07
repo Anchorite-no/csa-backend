@@ -23,7 +23,7 @@ from models.relation.user_event import user_event
 from models.relation.user_roles import user_role_association
 from models.relation.admin_roles import admin_role_association
 from models.recruit import Recruitment, Evaluation
-from config import update_recruit_deadline
+from misc.recruit_deadline import set_recruit_deadline as save_recruit_deadline
 router = APIRouter()
 
 
@@ -57,7 +57,7 @@ class UserDelete(BaseModel):
     uid: Annotated[str, Field(pattern=r"^\d+$")]  
 
 class SetRecruitDeadline(BaseModel):
-    deadline: Annotated[str, Field(pattern=r"\d{4}-\d{2}-\d{2}")]
+    deadline: Annotated[str, Field(min_length=10, max_length=64)]
 
 
 def is_manager(db: Session, aid: str) -> bool:
@@ -241,21 +241,18 @@ def update_user_role(
 
 @router.post("/set_recruit_deadline", tags=["admin"])
 def set_recruit_deadline(
-    data: SetRecruitDeadline
+    data: SetRecruitDeadline,
+    db: Session = Depends(get_db),
 ):
-    deadline_str = data.deadline  
-    
     try:
-        datetime.strptime(deadline_str, "%Y-%m-%d")
-    except ValueError:
-        raise HTTPException(status_code=400, detail="日期格式错误，请使用 YYYY-MM-DD 格式")
-    
-    update_recruit_deadline(deadline_str)
+        deadline = save_recruit_deadline(db, data.deadline)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     
     return {
         "code": 200,
         "message": "招新截止日期设置成功",
-        "data": {"deadline": deadline_str}
+        "data": {"deadline": deadline.isoformat(), "timezone": "Asia/Shanghai"}
     }
 
 

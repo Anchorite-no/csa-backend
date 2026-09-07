@@ -28,7 +28,7 @@ from datetime import datetime
 from misc.dingtalk import send_dingtalk_message_to_user
 from routes.admin import is_manager
 
-from config import get_config
+from misc.recruit_deadline import deadline_status, require_recruitment_open
 
 router = APIRouter()
 
@@ -97,19 +97,11 @@ class ConfirmationMajor(BaseModel):
     grade: int
 
 @router.get('/get_deadline')
-async def get_deadline():
-    settings = get_config()
-    deadline_str = settings.RECRUIT_DEADLINE 
-    if not deadline_str:
-        return {
-            "code": 500,
-            "message": "未找到截止日期",
-            "deadline": None
-        }
+def get_deadline(db: Session = Depends(get_db)):
     return {
         "code": 200,
         "message": "获取截止日期成功",
-        "deadline": deadline_str  
+        **deadline_status(db),
     }
 
 @router.post("/major_confirm")
@@ -159,6 +151,7 @@ class RecruitItem(BaseModel):
 
 @router.post("/recruit_confirm")
 def confirm_recruit(data: RecruitItem, db: Session = Depends(get_db)):
+    require_recruitment_open(db)
     existing_recruit = db.query(Recruitment).filter(Recruitment.uid == data.uid).first()
     if existing_recruit:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="该学号已提交过报名信息")

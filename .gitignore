@@ -186,3 +186,7 @@ AGENTS.md
 config.py
 misc/dingtalk.py
 requirements.txt
+
+# Regression tests for shared recruitment settings.
+!tests/
+!tests/*.py
