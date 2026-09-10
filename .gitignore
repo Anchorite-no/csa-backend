@@ -190,3 +190,6 @@ requirements.txt
 # Regression tests for shared recruitment settings.
 !tests/
 !tests/*.py
+
+# Deployment-specific admission contacts.
+/config/recruitment.json

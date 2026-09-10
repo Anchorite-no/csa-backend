@@ -30,6 +30,7 @@ from routes.admin import is_manager
 
 from misc.recruit_deadline import deadline_status, require_recruitment_open
 from misc.recruit_options import recruitment_options, undergraduate_major, validate_enrollment_grade
+from misc.recruit_contacts import get_minister_wechat
 
 router = APIRouter()
 
@@ -688,12 +689,6 @@ def final_accept(
     db: Session = Depends(get_db),
     _: bool = Depends(login_required_operator),
 ):
-    vx_number = {
-        'office' : 's1764958267',
-        'competition' : 'zsh15258751891',
-        'research' : 'king_back123',
-        'activity' : 'JXCzszszs'
-    }
     try:
         recruit = db.query(Recruitment).filter(Recruitment.uid == request.uid).first()
         if not recruit:
@@ -707,6 +702,8 @@ def final_accept(
         
         if not request.department:
             raise HTTPException(status_code=400, detail="Must assign department first")
+
+        minister_wechat = get_minister_wechat(request.department)
         
         recruit.is_admitted = True
         recruit.evaluation_status = 'accepted'
@@ -788,7 +785,7 @@ def final_accept(
 登陆路由：https://csa.zju.edu.cn/login
 
 【后续安排】
-请添加部门部长微信: {vx_number[request.department]}
+请添加部门部长微信: {minister_wechat}
 
 【联系方式】
 如有任何疑问，请通过以下方式联系我们：
@@ -815,6 +812,9 @@ def final_accept(
         
         return {"success": True, "message": "录取成功，录取通知已发送"}
         
+    except HTTPException:
+        db.rollback()
+        raise
     except Exception as e:
         db.rollback()
         raise HTTPException(

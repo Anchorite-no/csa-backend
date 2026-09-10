@@ -52,3 +52,30 @@ admin API/UI marks these undergraduate entries as requiring verification.
 Adding a verified `major/specialties_data_2026.csv` automatically enables catalog
 selection for subsequent applications; previously hand-entered records remain
 marked for verification.
+
+## Admission notification contacts
+
+Copy `config/recruitment.example.json` to `config/recruitment.json` and fill in
+the current ministers' WeChat IDs before deploying the admission route:
+
+- `office`: 办公室部
+- `competition`: 竞赛部
+- `research`: 科研部
+- `activity`: 活动部
+
+Keep `config/recruitment.json` on the server and copy it into each new backend
+release. Git ignores this file; the repository contains only an empty example.
+The file is resolved relative to the backend source directory, independent of
+the process's working directory. Keep it readable by the backend service user.
+
+Restart the backend once after deploying the new Python code. Later contact
+changes take effect on the next admission without restarting any workers.
+Replace the JSON file atomically when updating it. Invalid JSON, missing files,
+or an empty/invalid contact for the selected department reject the operation
+before admission, account changes, or DingTalk notification delivery.
+
+Run contact and admission regressions with mocked notification delivery:
+
+```sh
+DB_PATH=sqlite:///:memory: python -m unittest tests.test_recruit_contacts -v
+```
